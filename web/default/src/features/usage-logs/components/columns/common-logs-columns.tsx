@@ -667,7 +667,7 @@ export function useCommonLogsColumns(isAdmin: boolean): ColumnDef<UsageLog>[] {
               <div className='flex items-center gap-1 text-[11px]'>
                 {cacheReadTokens > 0 && (
                   <span className='text-muted-foreground/60'>
-                    {t('Cache')}↓ {cacheReadTokens.toLocaleString()}
+                    {t('Cache')}↓ {cacheReadTokens.toLocaleString()} ({promptTokens > 0 ? ((cacheReadTokens / promptTokens) * 100).toFixed(1) : '0'}%)
                   </span>
                 )}
                 {cacheWriteTokens > 0 && (
