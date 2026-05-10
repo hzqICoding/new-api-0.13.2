@@ -26,7 +26,7 @@ import {
 const defaultSiteSettings: SiteSettings = {
   'theme.frontend': 'default',
   Notice: '',
-  SystemName: 'New API',
+  SystemName: '壹码工坊',
   Logo: '',
   Footer: '',
   About: '',
