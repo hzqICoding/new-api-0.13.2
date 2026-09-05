@@ -746,10 +746,12 @@ export const getLogsColumns = ({
         const hasCacheRead = (cacheSummary?.cacheReadTokens || 0) > 0;
         const hasCacheWrite = (cacheSummary?.cacheWriteTokens || 0) > 0;
         let cacheText = '';
+        const promptTokens = record.prompt_tokens || 0;
+        const cachePercent = promptTokens > 0 ? ((cacheSummary?.cacheReadTokens || 0) / promptTokens * 100).toFixed(1) : '0';
         if (hasCacheRead && hasCacheWrite) {
-          cacheText = `${t('缓存读')} ${formatTokenCount(cacheSummary.cacheReadTokens)} · ${t('写')} ${formatTokenCount(cacheSummary.cacheWriteTokens)}`;
+          cacheText = `${t('缓存读')} ${formatTokenCount(cacheSummary.cacheReadTokens)} (${cachePercent}%) · ${t('写')} ${formatTokenCount(cacheSummary.cacheWriteTokens)}`;
         } else if (hasCacheRead) {
-          cacheText = `${t('缓存读')} ${formatTokenCount(cacheSummary.cacheReadTokens)}`;
+          cacheText = `${t('缓存读')} ${formatTokenCount(cacheSummary.cacheReadTokens)} (${cachePercent}%)`;
         } else if (hasCacheWrite) {
           cacheText = `${t('缓存写')} ${formatTokenCount(cacheSummary.cacheWriteTokens)}`;
         }

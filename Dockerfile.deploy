@@ -1,0 +1,18 @@
+FROM --platform=linux/amd64 debian:bookworm-slim
+
+ARG APT_MIRROR=deb.debian.org
+
+RUN set -eux; \
+    sed -i \
+        -e "s|http://deb.debian.org/debian|http://${APT_MIRROR}/debian|g" \
+        -e "s|http://deb.debian.org/debian-security|http://${APT_MIRROR}/debian-security|g" \
+        /etc/apt/sources.list.d/debian.sources; \
+    apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 update; \
+    DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get install -y --no-install-recommends ca-certificates tzdata wget; \
+    rm -rf /var/lib/apt/lists/*; \
+    update-ca-certificates
+COPY new-api /
+COPY LICENSE /licenses/
+EXPOSE 3000
+WORKDIR /data
+ENTRYPOINT ["/new-api"]
