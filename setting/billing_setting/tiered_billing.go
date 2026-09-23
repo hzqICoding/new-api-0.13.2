@@ -2,6 +2,7 @@ package billing_setting
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	"github.com/QuantumNous/new-api/setting/config"
@@ -18,13 +19,15 @@ const (
 // BillingSetting is managed by config.GlobalConfig.Register.
 // DB keys: billing_setting.billing_mode, billing_setting.billing_expr
 type BillingSetting struct {
-	BillingMode map[string]string `json:"billing_mode"`
-	BillingExpr map[string]string `json:"billing_expr"`
+	BillingMode        map[string]string  `json:"billing_mode"`
+	BillingExpr        map[string]string  `json:"billing_expr"`
+	GroupRatioOverride map[string]float64 `json:"group_ratio_override"`
 }
 
 var billingSetting = BillingSetting{
-	BillingMode: make(map[string]string),
-	BillingExpr: make(map[string]string),
+	BillingMode:        make(map[string]string),
+	BillingExpr:        make(map[string]string),
+	GroupRatioOverride: make(map[string]float64),
 }
 
 func init() {
@@ -40,6 +43,16 @@ func GetBillingMode(model string) string {
 		return mode
 	}
 	return BillingModeRatio
+}
+
+// GetGroupRatioOverride returns a model-specific final group multiplier.
+// It replaces normal and user-specific group multipliers without changing routing.
+func GetGroupRatioOverride(model string) (float64, bool) {
+	ratio, ok := billingSetting.GroupRatioOverride[model]
+	if !ok || ratio < 0 || math.IsNaN(ratio) || math.IsInf(ratio, 0) {
+		return 0, false
+	}
+	return ratio, true
 }
 
 func GetBillingExpr(model string) (string, bool) {

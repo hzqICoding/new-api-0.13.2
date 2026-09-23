@@ -4,6 +4,7 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/billing_setting"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
 
 	"github.com/gin-gonic/gin"
@@ -57,6 +58,13 @@ func GetPricing(c *gin.Context) {
 
 	usableGroup = service.GetUserUsableGroups(group)
 	pricing = filterPricingByUsableGroups(pricing, usableGroup)
+	// Copy cached records before adding live model-specific group multipliers.
+	pricing = append([]model.Pricing(nil), pricing...)
+	for i := range pricing {
+		if ratio, ok := billing_setting.GetGroupRatioOverride(pricing[i].ModelName); ok {
+			pricing[i].GroupRatioOverride = &ratio
+		}
+	}
 	// check groupRatio contains usableGroup
 	for group := range ratio_setting.GetGroupRatioCopy() {
 		if _, ok := usableGroup[group]; !ok {

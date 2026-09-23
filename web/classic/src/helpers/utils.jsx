@@ -645,6 +645,11 @@ export const calculateModelPrice = ({
     }
   }
 
+  // 部分模型按统一展示倍率定价；仅覆盖最终计算倍率，不改变分组选择与筛选。
+  if (Number.isFinite(record.group_ratio_override)) {
+    usedGroupRatio = record.group_ratio_override;
+  }
+
   // 2. 动态计费（tiered_expr）
   if (record.billing_mode === 'tiered_expr' && record.billing_expr) {
     return {

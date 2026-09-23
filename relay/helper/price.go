@@ -49,6 +49,11 @@ func HandleGroupRatio(ctx *gin.Context, relayInfo *relaycommon.RelayInfo) types.
 		relayInfo.UsingGroup = autoGroup.(string)
 	}
 
+	if ratio, ok := billing_setting.GetGroupRatioOverride(relayInfo.OriginModelName); ok {
+		groupRatioInfo.GroupRatio = ratio
+		return groupRatioInfo
+	}
+
 	// check user group special ratio
 	userGroupRatio, ok := ratio_setting.GetGroupGroupRatio(relayInfo.UserGroup, relayInfo.UsingGroup)
 	if ok {
