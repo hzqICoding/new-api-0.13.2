@@ -10,6 +10,8 @@ import { unzipSync, strFromU8 } from 'fflate';
 import {
   normalizeApiKey,
   normalizeEndpoint,
+  getSetupEndpoints,
+  selectSetupEndpoint,
   renderConfig,
   renderAuth,
   requireSetupSuccess,
@@ -364,6 +366,66 @@ const compiled = await build({
 const generated = await import(
   `data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString('base64')}`
 );
+const siteMetadata = { ...metadata, base_url: 'https://api.1aicode.space/v1' };
+test('route selection defaults to CF and limits direct routing to the approved site', () => {
+  assert.deepEqual(
+    getSetupEndpoints(siteMetadata).map((item) => item.id),
+    ['cf', 'direct'],
+  );
+  assert.equal(
+    selectSetupEndpoint(siteMetadata).base_url,
+    'https://api.1aicode.space/v1',
+  );
+  assert.equal(
+    selectSetupEndpoint(siteMetadata, 'direct').base_url,
+    'https://api.dm.1aicode.space/v1',
+  );
+  assert.equal(selectSetupEndpoint(metadata).base_url, metadata.base_url);
+  assert.throws(() => selectSetupEndpoint(metadata, 'direct'));
+  assert.throws(() =>
+    selectSetupEndpoint(siteMetadata, 'https://unknown.example/v1'),
+  );
+  assert.match(
+    renderConfig(siteMetadata, { target: 'windows', model: 'gpt-5.6-sol' }),
+    /base_url = "https:\/\/api\.1aicode\.space\/v1"/,
+  );
+});
+for (const target of metadata.supported_targets) {
+  for (const endpointId of ['cf', 'direct']) {
+    const endpoint = selectSetupEndpoint(siteMetadata, endpointId);
+    const { blob } = await generated.buildCodexSetupZip({
+      metadata: siteMetadata,
+      target,
+      endpointId,
+      model: 'gpt-5.6-sol',
+      rawKey: fakeKey,
+    });
+    const files = unzipSync(new Uint8Array(await blob.arrayBuffer()));
+    const text = (name) => strFromU8(files[name]);
+    const manifest = JSON.parse(text('payload/manifest.json'));
+    assert.equal(manifest.base_url, endpoint.base_url);
+    assert.ok(
+      text('payload/config.toml').includes(`base_url = "${endpoint.base_url}"`),
+    );
+    assert.ok(
+      text('payload/settings.tsv').includes(`base_url\t${endpoint.base_url}\n`),
+    );
+    assert.ok(text('README.txt').includes(`线路：${endpoint.base_url}`));
+    assert.equal(
+      text('payload/config.toml'),
+      renderConfig(siteMetadata, { target, model: 'gpt-5.6-sol', endpointId }),
+    );
+    assert.equal(
+      createHash('sha256').update(files['payload/config.toml']).digest('hex'),
+      manifest.files['config.toml'],
+    );
+    assert.equal(JSON.parse(text('payload/auth.json')).OPENAI_API_KEY, fakeKey);
+  }
+  count++;
+  console.log(
+    `PASS ${target} CF/direct ZIP: selected route matches TOML, manifest, settings, README and manual config`,
+  );
+}
 for (const target of metadata.supported_targets) {
   const { blob, filename } = await generated.buildCodexSetupZip({
     metadata,

@@ -8,6 +8,8 @@ export const MODELS = [
   'gpt-6.1-sol',
 ];
 export const TARGETS = ['windows', 'macos', 'linux', 'wsl'];
+const CF_ENDPOINT = 'https://api.1aicode.space/v1';
+const DIRECT_ENDPOINT = 'https://api.dm.1aicode.space/v1';
 const ENDPOINT =
   /^https:\/\/(?:[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?|\[[0-9A-Fa-f:]+\])(?::[0-9]{1,5})?(?:\/[A-Za-z0-9._~-]+)*\/v1$/;
 
@@ -42,6 +44,8 @@ const SAFE_MESSAGES = Object.freeze({
     '当前配置没有本向导支持的运行系统。请刷新页面，或联系管理员更新配置模块。',
   invalid_selection:
     '所选系统或模型已不可用。请重新加载配置，选择当前令牌支持的运行系统和模型。',
+  invalid_endpoint:
+    '所选线路已不可用。请重新加载配置并选择当前站点提供的线路。',
   invalid_key: '未取得有效的完整密钥。请重新加载向导后重试；不要使用掩码密钥。',
   endpoint_changed:
     '管理员接入地址已变化。请重新加载配置，核对新线路后再下载。',
@@ -227,7 +231,29 @@ export function validateMetadata(metadata, tokenId, origin) {
   };
 }
 
-export function renderConfig(metadata, { target, model }) {
+// These are two operator-approved entrances to this deployment. Never offer
+// this site's alternate host for a different administrator-configured gateway.
+export function getSetupEndpoints(metadata) {
+  const base_url = normalizeEndpoint(metadata.base_url);
+  if (base_url === CF_ENDPOINT) {
+    return [
+      { id: 'cf', label: 'CF 线路（默认）', base_url: CF_ENDPOINT },
+      { id: 'direct', label: '直连线路', base_url: DIRECT_ENDPOINT },
+    ];
+  }
+  return [{ id: 'default', label: '站点默认线路', base_url }];
+}
+
+export function selectSetupEndpoint(metadata, endpointId) {
+  const endpoints = getSetupEndpoints(metadata);
+  const selected = endpoints.find(
+    (item) => item.id === (endpointId ?? endpoints[0].id),
+  );
+  if (!selected) throw setupError('invalid_endpoint');
+  return selected;
+}
+
+export function renderConfig(metadata, { target, model, endpointId }) {
   if (
     !Array.isArray(metadata?.supported_targets) ||
     !Array.isArray(metadata?.models)
@@ -246,7 +272,7 @@ export function renderConfig(metadata, { target, model }) {
   ) {
     throw setupError('invalid_selection');
   }
-  const endpoint = normalizeEndpoint(metadata.base_url);
+  const endpoint = selectSetupEndpoint(metadata, endpointId).base_url;
   return [
     `# ${TEMPLATE_VERSION}`,
     'model_provider = "new-api"',

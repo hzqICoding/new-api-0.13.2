@@ -7,6 +7,7 @@ import {
   renderConfig,
   renderAuth,
   validateMetadata,
+  selectSetupEndpoint,
 } from './config';
 
 const sha256 = async (text) =>
@@ -19,11 +20,13 @@ export async function buildCodexSetupZip({
   metadata,
   target,
   model,
+  endpointId,
   rawKey,
   runCliTest = true,
 }) {
   const checked = validateMetadata(metadata, metadata.token_id);
-  const config = renderConfig(checked, { target, model });
+  const endpoint = selectSetupEndpoint(checked, endpointId);
+  const config = renderConfig(checked, { target, model, endpointId });
   const auth = renderAuth(rawKey);
   const [configHash, authHash] = await Promise.all([
     sha256(config),
@@ -34,7 +37,7 @@ export async function buildCodexSetupZip({
     template_version: TEMPLATE_VERSION,
     target,
     model,
-    base_url: checked.base_url,
+    base_url: endpoint.base_url,
     run_cli_test: !!runCliTest,
     files: { 'config.toml': configHash, 'auth.json': authHash },
   };
@@ -42,7 +45,7 @@ export async function buildCodexSetupZip({
     Object.entries({
       target,
       model,
-      base_url: checked.base_url,
+      base_url: endpoint.base_url,
       run_cli_test: String(!!runCliTest),
       template_version: TEMPLATE_VERSION,
     })
@@ -54,7 +57,7 @@ export async function buildCodexSetupZip({
       : target === 'macos'
         ? 'setup.command'
         : 'setup.sh';
-  const instructions = `new-api · Codex 快速配置\n\n先完整解压。Windows 双击 setup.cmd；macOS 在终端运行 bash setup.command；Linux/WSL 运行 bash setup.sh。请在真正运行 Codex 的系统中操作。\n实际目标是 CODEX_HOME 或当前用户的 .codex。已有配置会先备份，经本机 REPLACE 确认后替换；旧 MCP、profiles、hooks、登录方式也会被替换。复杂配置可取消后手动合并。\n本包不安装 CLI、不创建或撤销令牌。请先安装 Codex CLI，再重开客户端。\n本机只有输入 FULL 才做在线检查，短 CLI 调用可能产生少量费用。仅本地检查不会调用模型。\n线路：${checked.base_url}\n模型：${model}\n\n只检查：Windows setup.ps1 -CheckOnly；POSIX bash ${entry} --check-only。\n恢复：Windows setup.ps1 -Restore；POSIX bash ${entry} --restore。\n仅本地：Windows setup.ps1 -LocalOnly；POSIX bash ${entry} --local-only。\nreport.html/report.json 仅保存在本机，不会上传网站；配置保存与调用验证是独立结果。\n\n本包 auth.json 含完整密钥，请勿转发、提交仓库或截图公开。下载包和历史备份均需妥善保管。\nhttps://developers.openai.com/codex/cli/\n`;
+  const instructions = `new-api · Codex 快速配置\n\n先完整解压。Windows 双击 setup.cmd；macOS 在终端运行 bash setup.command；Linux/WSL 运行 bash setup.sh。请在真正运行 Codex 的系统中操作。\n实际目标是 CODEX_HOME 或当前用户的 .codex。已有配置会先备份，经本机 REPLACE 确认后替换；旧 MCP、profiles、hooks、登录方式也会被替换。复杂配置可取消后手动合并。\n本包不安装 CLI、不创建或撤销令牌。请先安装 Codex CLI，再重开客户端。\n本机只有输入 FULL 才做在线检查，短 CLI 调用可能产生少量费用。仅本地检查不会调用模型。\n线路：${endpoint.base_url}\n模型：${model}\n\n只检查：Windows setup.ps1 -CheckOnly；POSIX bash ${entry} --check-only。\n恢复：Windows setup.ps1 -Restore；POSIX bash ${entry} --restore。\n仅本地：Windows setup.ps1 -LocalOnly；POSIX bash ${entry} --local-only。\nreport.html/report.json 仅保存在本机，不会上传网站；配置保存与调用验证是独立结果。\n\n本包 auth.json 含完整密钥，请勿转发、提交仓库或截图公开。下载包和历史备份均需妥善保管。\nhttps://developers.openai.com/codex/cli/\n`;
   const files = {
     'payload/config.toml': strToU8(config),
     'payload/auth.json': [strToU8(auth), { os: 3, attrs: 0o100600 << 16 }],

@@ -11,6 +11,12 @@ WORK = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else 'E:/tmp/newapi-codex-u
 BUILD = WORK / 'build'
 OLD_NS = 'codex-error-fix-20261005'
 NS = 'codex-ui-20261005'
+if len(sys.argv) > 2:
+    assert len(sys.argv) == 5, 'Arguments: output previous old_namespace new_namespace'
+    PREVIOUS = pathlib.Path(sys.argv[2])
+    OLD_NS, NS = sys.argv[3:5]
+    assert all(value and all(c.islower() or c.isdigit() or c == '-' for c in value) for value in [OLD_NS, NS])
+    assert OLD_NS != NS
 
 
 def digest(path):
@@ -50,8 +56,9 @@ assert css.is_file() and '.newapi-codex-setup' in css.read_text(encoding='utf-8'
 index = dist / 'index.html'
 html = index.read_text(encoding='utf-8').replace('/assets/' + OLD_NS + '/', '/assets/' + NS + '/')
 assert f'/assets/{NS}/index-luna-0216aa8f9328.js' in html
-assert html.count('codex-bootstrap.js') == 1 and 'codex-setup-entry.css' not in html
-html = html.replace('  </head>', f'    <link rel="stylesheet" href="/assets/{NS}/codex-setup-entry.css" />\n  </head>')
+assert html.count('codex-bootstrap.js') == 1
+if 'codex-setup-entry.css' not in html:
+    html = html.replace('  </head>', f'    <link rel="stylesheet" href="/assets/{NS}/codex-setup-entry.css" />\n  </head>')
 assert html.count('codex-setup-entry.css') == 1
 index.write_text(html, encoding='utf-8', newline='\n')
 

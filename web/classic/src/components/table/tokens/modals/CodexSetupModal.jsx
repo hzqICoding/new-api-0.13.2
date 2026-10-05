@@ -24,6 +24,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import {
   normalizeApiKey,
+  getSetupEndpoints,
+  selectSetupEndpoint,
   renderAuth,
   renderConfig,
   requireSetupSuccess,
@@ -80,6 +82,7 @@ export default function CodexSetupModal({
   const [target, setTarget] = useState(suggestTarget);
   const [model, setModel] = useState('');
   const [metadata, setMetadata] = useState(null);
+  const [endpointId, setEndpointId] = useState(undefined);
   const [runCliTest, setRunCliTest] = useState(true);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -126,6 +129,7 @@ export default function CodexSetupModal({
     setModel('');
     setError('');
     setExpired(false);
+    setEndpointId(undefined);
     setManual(false);
     setStep(1);
     setLoading(false);
@@ -173,6 +177,7 @@ export default function CodexSetupModal({
           window.location.origin,
         );
         setMetadata(checked);
+        setEndpointId(getSetupEndpoints(checked)[0].id);
         setModel(checked.default_model || '');
         setTarget((current) =>
           checked.supported_targets.includes(current)
@@ -245,7 +250,14 @@ export default function CodexSetupModal({
     setError('');
     setDownloaded(false);
     const ticket = { ...epoch.current.begin(), tokenId, userIdentity };
-    const selected = { tokenId, target, model, runCliTest, userIdentity };
+    const selected = {
+      tokenId,
+      target,
+      model,
+      endpointId,
+      runCliTest,
+      userIdentity,
+    };
     let rawKey = '';
     try {
       const response = await request.get(
@@ -264,7 +276,11 @@ export default function CodexSetupModal({
         selected.tokenId,
         window.location.origin,
       );
-      if (checked.base_url !== metadata.base_url)
+      if (
+        checked.base_url !== metadata.base_url ||
+        selectSetupEndpoint(checked, selected.endpointId).base_url !==
+          selectSetupEndpoint(metadata, selected.endpointId).base_url
+      )
         throw setupError('endpoint_changed');
       const config = renderConfig(checked, selected);
       // Always obtain the real key at the actual export boundary; never use resolvedTokenKeys.
@@ -322,13 +338,16 @@ export default function CodexSetupModal({
   let preview = '';
   if (metadata && model) {
     try {
-      preview = renderConfig(metadata, { target, model });
+      preview = renderConfig(metadata, { target, model, endpointId });
     } catch {
       /* selection not ready */
     }
   }
   const enabled =
     !!metadata && !!preview && !expired && !loading && !busy && !error;
+  const endpoints = metadata ? getSetupEndpoints(metadata) : [];
+  const selectedEndpoint =
+    endpoints.find((item) => item.id === endpointId) || endpoints[0];
   const entry =
     target === 'windows'
       ? 'setup.cmd'
@@ -610,16 +629,35 @@ export default function CodexSetupModal({
                 <small>{t('仅显示当前令牌可用的兼容模型')}</small>
               </label>
               <div className='ncs-field'>
-                <span className='ncs-field-label'>
+                <label
+                  className='ncs-field-label'
+                  htmlFor='ncs-endpoint-select'
+                >
                   <Link2 size={13} aria-hidden='true' />
-                  {t('HTTPS 接入地址')}
+                  {t('请求线路')}
+                </label>
+                <span className='ncs-select-wrap'>
+                  <select
+                    id='ncs-endpoint-select'
+                    value={endpointId || ''}
+                    onChange={(event) => {
+                      clearExports();
+                      setEndpointId(event.target.value);
+                    }}
+                  >
+                    {endpoints.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {t(item.label)}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={14} aria-hidden='true' />
                 </span>
                 <div className='ncs-endpoint'>
                   <Typography.Text copyable>
-                    {metadata.base_url}
+                    {selectedEndpoint?.base_url}
                   </Typography.Text>
                 </div>
-                <small>{t('由站点管理员配置')}</small>
               </div>
             </div>
 
@@ -667,6 +705,12 @@ export default function CodexSetupModal({
 
         {metadata && !expired && !loading && step === 2 && (
           <div className='ncs-step-content'>
+            <div className='ncs-endpoint'>
+              <span>{t(selectedEndpoint?.label)} · </span>
+              <Typography.Text copyable>
+                {selectedEndpoint?.base_url}
+              </Typography.Text>
+            </div>
             <div className='ncs-section-heading'>
               <h3>{t('下载后，在电脑上完成配置')}</h3>
               <p>

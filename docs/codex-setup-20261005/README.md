@@ -4,6 +4,7 @@
 
 | 日期 | 版本 | 变更说明 |
 |---|---|---|
+| 2026-10-05 | r15.13 · 已发布 | 快速配置新增CF/直连线路选择，CF为默认，直连为api.dm.1aicode.space/v1。预览、手动配置及四系统ZIP的TOML/检查设置/说明全部跟随选择。两入口状态及匿名鉴权、公网8项资源哈希通过。 |
 | 2026-10-05 | r15.12 · 已发布 | 参照拼车项目重做青绿两步向导、四系统卡、配置摘要和独立下载区。CSS已单独内嵌发布，公网8项新旧资源哈希通过；后端业务源码保持，视觉验收待用户刷新确认。 |
 | 2026-10-05 | r15.11 · 已发布 | 用户反馈#490快速配置只显示泛化错误。已核实旧日卡分组授权随订阅到期失效，保持真实权限拦截；前端显示具体原因及处理方法。新旧公网资源及服务检查通过，实际页面待用户确认。 |
 | 2026-10-05 | r15.10 · 已发布 | classic 密钥页接入已有令牌/创建成功后的 Codex 快速配置，四系统ZIP与本机检查；补令牌专属只读元数据和创建ID。保留原生产定制，未改计费/额度/数据库结构。真实浏览器及用户电脑验收待反馈。 |
@@ -162,3 +163,25 @@ ssh -o BatchMode=yes -J serverA serverB "python3 /opt/carpool/releases/newapi-co
 ```
 
 用户Ctrl+F5刷新后验收：系统卡选择、模型与地址复制、下一步/上一步、下载ZIP及手动文件、关闭/换Key/超时提示，以及窄屏和暗色显示。实际浏览器视觉及交互仍由用户验收；没有自动浏览器测试、真实模型调用或用户电脑配置操作。主代理最终补回原URL的copyable操作，下载模板和脚本文件未变化。
+
+## CF / 直连线路选择（r15.13）
+
+按用户明确指定增加两条线路：默认`https://api.1aicode.space/v1`（CF），可选`https://api.dm.1aicode.space/v1`（直连）。第一步右侧改为“请求线路”下拉及可复制实际地址，第二步显示所选线路以供下载前核对。每次新打开向导仍默认CF；同一向导切系统、模型或返回上一步保留已选线路。
+
+前端以固定线路ID选择已批准入口，仅管理员ServerAddress正规化后为本站CF端点时提供这两个选项。其他站点继续只提供其管理员默认地址，不把其他部署的Key导向本站。保持元数据原始base_url用于下载前复验，所选endpointId单独快照；线路改选取消在途导出。重新获取元数据后，校验原地址/所选线路再取Key。预览、手动config.toml、ZIP内config.toml、manifest.json、settings.tsv及README全部使用同一选择；auth.json不因线路变化而更换Key。检查脚本读取settings.tsv，因此本机HTTPS/模型/CLI检测也跟随所选地址。
+
+本轮主代理直接处理，没有新增或复用子会话。20组JS回归通过，新增4系统×2线路的实际ZIP内容/哈希/手动配置一致性、默认CF、拒绝未知线路及其他部署不提供本站直连的验证；14个Bash URL谓词、classic完整构建、生产JS静态链接通过。未改后端业务源码、脚本模板、数据库、站点options或基础设施。
+
+已发布`v0.13.2-carpool-r15.13-codex-routes-20261005`，镜像`hzqicoding/new-api:carpool-r15.13-codex-routes-20261005`，ID `sha256:7ce5c41556333571245e1bf3d36f788c0a85d4da35e2351d76b359b347aeb736`；程序SHA-256 `43b07db7e4e33696027c6a3dc8f33a97d90c365dc4d3842b3831312dcecefc7e`。589项Go源码与r15.12一致，保留834项旧非首页资源，新内嵌资源共956项；CSS字节保持，命名空间`codex-routes-20261005`。完整构建保留原Browserslist/Lottie eval/大包提示。
+
+服务器内嵌资源清单、临时启动/令牌元数据与7项静态资源、切换后版本/程序哈希/拼车health及日志联通通过；临时容器及卷已清理，options摘要/其他容器ID及启动时间不变。CF与直连公网/api/status均返回r15.13，两入口匿名/v1/models均401；8项新旧JS/CSS哈希匹配。没有真实模型调用，也没有浏览器或用户电脑验收。
+
+本地构建`E:/tmp/newapi-codex-routes-20261005`，命令：`python docs/codex-setup-20261005/prepare_ui.py E:/tmp/newapi-codex-routes-20261005 E:/tmp/newapi-codex-ui-20261005 codex-ui-20261005 codex-routes-20261005`。发布目录`serverB:/opt/carpool/releases/newapi-codex-routes-20261005/`，r15.12回滚容器`new-api-rollback-newapi-codex-routes-20261005`停止保留。
+
+```powershell
+ssh -o BatchMode=yes -J serverA serverB "python3 /opt/carpool/releases/newapi-codex-routes-20261005/deploy_routes.py verify"
+# 确认没有后续发布后再回滚：
+ssh -o BatchMode=yes -J serverA serverB "python3 /opt/carpool/releases/newapi-codex-routes-20261005/deploy_routes.py rollback"
+```
+
+用户Ctrl+F5后选择线路下载即可。只读状态探测不代表用户网络或实际CLI调用已验证；已有电脑配置不会被网站自动替换，需用户下载对应线路的配置包并自行运行。
