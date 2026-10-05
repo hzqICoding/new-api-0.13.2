@@ -258,6 +258,8 @@ func migrateDB() error {
 	err := DB.AutoMigrate(
 		&Channel{},
 		&Token{},
+		&AdminResourceOperation{},
+		&AdminQuotaResetOperation{},
 		&User{},
 		&PasskeyCredential{},
 		&Option{},
@@ -307,6 +309,8 @@ func migrateDBFast() error {
 	}{
 		{&Channel{}, "Channel"},
 		{&Token{}, "Token"},
+		{&AdminResourceOperation{}, "AdminResourceOperation"},
+		{&AdminQuotaResetOperation{}, "AdminQuotaResetOperation"},
 		{&User{}, "User"},
 		{&PasskeyCredential{}, "PasskeyCredential"},
 		{&Option{}, "Option"},

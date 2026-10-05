@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 func cacheSetToken(token Token) error {
 	key := common.GenerateHMAC(token.Key)
 	token.Clean()
-	err := common.RedisHSetObj(fmt.Sprintf("token:%s", key), &token, time.Duration(common.RedisKeyCacheSeconds())*time.Second)
+	err := common.RedisHSetObjUnlessMarked(fmt.Sprintf("token:%s", key), &token, time.Duration(common.RedisKeyCacheSeconds())*time.Second, "_admin_revoked")
 	if err != nil {
 		return err
 	}
@@ -20,16 +21,21 @@ func cacheSetToken(token Token) error {
 
 func cacheDeleteToken(key string) error {
 	key = common.GenerateHMAC(key)
-	err := common.RedisDelKey(fmt.Sprintf("token:%s", key))
+	err := common.RDB.Eval(context.Background(), `if redis.call('HEXISTS',KEYS[1],'_admin_revoked') == 0 then return redis.call('DEL',KEYS[1]) end return 0`, []string{fmt.Sprintf("token:%s", key)}).Err()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
+func revokeTokenCache(key string) error {
+	cacheKey := fmt.Sprintf("token:%s", common.GenerateHMAC(key))
+	return common.RDB.Eval(context.Background(), `redis.call('DEL',KEYS[1]); redis.call('HSET',KEYS[1],'_admin_revoked','1'); return 1`, []string{cacheKey}).Err()
+}
+
 func cacheIncrTokenQuota(key string, increment int64) error {
 	key = common.GenerateHMAC(key)
-	err := common.RedisHIncrBy(fmt.Sprintf("token:%s", key), constant.TokenFiledRemainQuota, increment)
+	err := common.RedisHIncrByUnlessMarked(fmt.Sprintf("token:%s", key), constant.TokenFiledRemainQuota, increment, "_admin_revoked")
 	if err != nil {
 		return err
 	}
@@ -42,7 +48,7 @@ func cacheDecrTokenQuota(key string, decrement int64) error {
 
 func cacheSetTokenField(key string, field string, value string) error {
 	key = common.GenerateHMAC(key)
-	err := common.RedisHSetField(fmt.Sprintf("token:%s", key), field, value)
+	err := common.RedisHSetFieldUnlessMarked(fmt.Sprintf("token:%s", key), field, value, "_admin_revoked")
 	if err != nil {
 		return err
 	}
@@ -59,6 +65,9 @@ func cacheGetTokenByKey(key string) (*Token, error) {
 	err := common.RedisHGetObj(fmt.Sprintf("token:%s", hmacKey), &token)
 	if err != nil {
 		return nil, err
+	}
+	if token.Id <= 0 {
+		return nil, fmt.Errorf("token cache revoked")
 	}
 	token.Key = key
 	return &token, nil

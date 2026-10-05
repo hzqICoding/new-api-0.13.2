@@ -137,7 +137,12 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 		contains, words := service.CheckSensitiveText(meta.CombineText)
 		if contains {
 			logger.LogWarn(c, fmt.Sprintf("user sensitive words detected: %s", strings.Join(words, ", ")))
-			newAPIError = types.NewError(err, types.ErrorCodeSensitiveWordsDetected)
+			newAPIError = types.NewErrorWithStatusCode(
+				fmt.Errorf("请求包含敏感词「%s」，已被拦截。请删除或替换当前消息及历史对话中的相关内容后重试。如仍有问题，请联系管理员。", strings.Join(words, "、")),
+				types.ErrorCodeSensitiveWordsDetected,
+				http.StatusBadRequest,
+				types.ErrOptionWithSkipRetry(),
+			)
 			return
 		}
 	}

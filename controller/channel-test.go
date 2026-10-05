@@ -220,6 +220,7 @@ func testChannel(channel *model.Channel, testModel string, endpointType string, 
 	}
 
 	request := buildTestRequest(testModel, endpointType, channel, isStream)
+	applyClineChannelTestParameters(channel, request)
 
 	info, err := relaycommon.GenRelayInfo(c, relayFormat, request, nil)
 
@@ -677,6 +678,21 @@ func detectErrorMessageFromJSONBytes(jsonBytes []byte) string {
 		return "upstream returned error payload"
 	}
 	return message
+}
+
+// applyClineChannelTestParameters is deliberately limited to this installation's
+// Cline test channel. Both manual and automatic tests call testChannel; ordinary
+// relay requests never pass through this function.
+func applyClineChannelTestParameters(channel *model.Channel, request dto.Request) {
+	if channel == nil || channel.Id != 55 {
+		return
+	}
+	req, ok := request.(*dto.GeneralOpenAIRequest)
+	if !ok || !strings.HasPrefix(req.Model, "deepseek/") {
+		return
+	}
+	req.MaxTokens = lo.ToPtr(uint(256))
+	req.Reasoning = json.RawMessage(`{"enabled":false}`)
 }
 
 func buildTestRequest(model string, endpointType string, channel *model.Channel, isStream bool) dto.Request {

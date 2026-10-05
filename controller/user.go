@@ -22,6 +22,7 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type LoginRequest struct {
@@ -851,7 +852,7 @@ type ManageRequest struct {
 // ManageUser Only admin user can do this
 func ManageUser(c *gin.Context) {
 	var req ManageRequest
-	err := json.NewDecoder(c.Request.Body).Decode(&req)
+	err := common.DecodeJson(c.Request.Body, &req)
 
 	if err != nil {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
@@ -861,9 +862,16 @@ func ManageUser(c *gin.Context) {
 		Id: req.Id,
 	}
 	// Fill attributes
-	model.DB.Unscoped().Where(&user).First(&user)
-	if user.Id == 0 {
+	if req.Id <= 0 {
 		common.ApiErrorI18n(c, i18n.MsgUserNotExists)
+		return
+	}
+	if err := model.DB.Unscoped().First(&user, req.Id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			common.ApiErrorI18n(c, i18n.MsgUserNotExists)
+		} else {
+			common.ApiError(c, err)
+		}
 		return
 	}
 	myRole := c.GetInt("role")
@@ -948,8 +956,8 @@ func ManageUser(c *gin.Context) {
 			model.RecordLogWithAdminInfo(user.Id, model.LogTypeManage,
 				fmt.Sprintf("管理员减少用户额度 %s", logger.LogQuota(req.Value)), adminInfo)
 		case "override":
-			oldQuota := user.Quota
-			if err := model.DB.Model(&model.User{}).Where("id = ?", user.Id).Update("quota", req.Value).Error; err != nil {
+			oldQuota, err := model.OverrideUserQuota(user.Id, req.Value)
+			if err != nil {
 				common.ApiError(c, err)
 				return
 			}

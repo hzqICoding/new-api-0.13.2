@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
@@ -11,6 +12,45 @@ import (
 )
 
 func GetAllLogs(c *gin.Context) {
+	var afterLogID, throughLogID *int64
+	for name, target := range map[string]**int64{"after_log_id": &afterLogID, "through_log_id": &throughLogID} {
+		if values, present := c.Request.URL.Query()[name]; present {
+			if len(values) != 1 || values[0] == "" {
+				c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "invalid_log_watermark"})
+				return
+			}
+			id, err := strconv.ParseInt(values[0], 10, 64)
+			if err != nil || id < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "invalid_log_watermark"})
+				return
+			}
+			*target = &id
+		}
+	}
+	var tokenIDs []int64
+	if rawValues, present := c.Request.URL.Query()["token_ids"]; present {
+		if len(rawValues) != 1 || len(rawValues[0]) > 20000 {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "invalid_token_ids"})
+			return
+		}
+		parts := strings.Split(rawValues[0], ",")
+		if len(parts) > 1000 {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "invalid_token_ids"})
+			return
+		}
+		seen := make(map[int64]bool)
+		for _, part := range parts {
+			id, err := strconv.ParseInt(strings.TrimSpace(part), 10, 64)
+			if err != nil || id <= 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "invalid_token_ids"})
+				return
+			}
+			if !seen[id] {
+				tokenIDs = append(tokenIDs, id)
+				seen[id] = true
+			}
+		}
+	}
 	pageInfo := common.GetPageQuery(c)
 	logType, _ := strconv.Atoi(c.Query("type"))
 	startTimestamp, _ := strconv.ParseInt(c.Query("start_timestamp"), 10, 64)
@@ -21,13 +61,22 @@ func GetAllLogs(c *gin.Context) {
 	channel, _ := strconv.Atoi(c.Query("channel"))
 	group := c.Query("group")
 	requestId := c.Query("request_id")
-	logs, total, err := model.GetAllLogs(logType, startTimestamp, endTimestamp, modelName, username, tokenName, pageInfo.GetStartIdx(), pageInfo.GetPageSize(), channel, group, requestId)
+	logs, total, err := model.GetAllLogsWithWatermarks(logType, startTimestamp, endTimestamp, modelName, username, tokenName, pageInfo.GetStartIdx(), pageInfo.GetPageSize(), channel, group, requestId, afterLogID, throughLogID, tokenIDs...)
 	if err != nil {
 		common.ApiError(c, err)
 		return
 	}
 	pageInfo.SetTotal(int(total))
 	pageInfo.SetItems(logs)
+	if len(tokenIDs) > 0 || afterLogID != nil || throughLogID != nil {
+		common.ApiSuccess(c, struct {
+			*common.PageInfo
+			TokenFilterApplied      bool `json:"token_filter_applied"`
+			AfterLogFilterApplied   bool `json:"after_log_filter_applied"`
+			ThroughLogFilterApplied bool `json:"through_log_filter_applied"`
+		}{pageInfo, len(tokenIDs) > 0, afterLogID != nil, throughLogID != nil})
+		return
+	}
 	common.ApiSuccess(c, pageInfo)
 	return
 }

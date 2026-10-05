@@ -105,6 +105,15 @@ func RedisDelKey(key string) error {
 }
 
 func RedisHSetObj(key string, obj interface{}, expiration time.Duration) error {
+	return redisHSetObj(key, obj, expiration, "")
+}
+
+// RedisHSetObjUnlessMarked atomically prevents delayed cache writers replacing a revocation marker.
+func RedisHSetObjUnlessMarked(key string, obj interface{}, expiration time.Duration, marker string) error {
+	return redisHSetObj(key, obj, expiration, marker)
+}
+
+func redisHSetObj(key string, obj interface{}, expiration time.Duration, marker string) error {
 	if DebugEnabled {
 		SysLog(fmt.Sprintf("Redis HSET: key=%s, obj=%+v, expiration=%v", key, obj, expiration))
 	}
@@ -143,6 +152,16 @@ func RedisHSetObj(key string, obj interface{}, expiration time.Duration) error {
 		data[field.Name] = fmt.Sprintf("%v", value.Interface())
 	}
 
+	if marker != "" {
+		args := []interface{}{marker, int64(expiration / time.Second)}
+		for field, value := range data {
+			args = append(args, field, value)
+		}
+		return RDB.Eval(ctx, `if redis.call('HEXISTS',KEYS[1],ARGV[1]) == 1 then return 0 end
+redis.call('HSET',KEYS[1],unpack(ARGV,3))
+if tonumber(ARGV[2]) > 0 then redis.call('EXPIRE',KEYS[1],ARGV[2]) end
+return 1`, []string{key}, args...).Err()
+	}
 	txn := RDB.TxPipeline()
 	txn.HSet(ctx, key, data)
 
@@ -297,6 +316,29 @@ func RedisHIncrBy(key, field string, delta int64) error {
 		return err
 	}
 	return nil
+}
+
+// RedisHIncrByUnlessMarked keeps the marker check, TTL read and mutation atomic.
+// It retains RedisHIncrBy's behavior of skipping absent or persistent hashes.
+func RedisHIncrByUnlessMarked(key, field string, delta int64, marker string) error {
+	return RDB.Eval(context.Background(), `if redis.call('HEXISTS',KEYS[1],ARGV[1]) == 1 then return 0 end
+local ttl = redis.call('TTL',KEYS[1])
+if ttl > 0 then
+redis.call('HINCRBY',KEYS[1],ARGV[2],ARGV[3])
+redis.call('EXPIRE',KEYS[1],ttl)
+end
+return 1`, []string{key}, marker, field, delta).Err()
+}
+
+// RedisHSetFieldUnlessMarked is the field-update counterpart of the guarded increment.
+func RedisHSetFieldUnlessMarked(key, field string, value interface{}, marker string) error {
+	return RDB.Eval(context.Background(), `if redis.call('HEXISTS',KEYS[1],ARGV[1]) == 1 then return 0 end
+local ttl = redis.call('TTL',KEYS[1])
+if ttl > 0 then
+redis.call('HSET',KEYS[1],ARGV[2],ARGV[3])
+redis.call('EXPIRE',KEYS[1],ttl)
+end
+return 1`, []string{key}, marker, field, value).Err()
 }
 
 func RedisHSetField(key, field string, value interface{}) error {

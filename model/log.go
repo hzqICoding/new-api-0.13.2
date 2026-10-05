@@ -295,7 +295,11 @@ func RecordTaskBillingLog(params RecordTaskBillingLogParams) {
 	}
 }
 
-func GetAllLogs(logType int, startTimestamp int64, endTimestamp int64, modelName string, username string, tokenName string, startIdx int, num int, channel int, group string, requestId string) (logs []*Log, total int64, err error) {
+func GetAllLogs(logType int, startTimestamp int64, endTimestamp int64, modelName string, username string, tokenName string, startIdx int, num int, channel int, group string, requestId string, tokenIDs ...int64) (logs []*Log, total int64, err error) {
+	return GetAllLogsWithWatermarks(logType, startTimestamp, endTimestamp, modelName, username, tokenName, startIdx, num, channel, group, requestId, nil, nil, tokenIDs...)
+}
+
+func GetAllLogsWithWatermarks(logType int, startTimestamp int64, endTimestamp int64, modelName string, username string, tokenName string, startIdx int, num int, channel int, group string, requestId string, afterID, throughID *int64, tokenIDs ...int64) (logs []*Log, total int64, err error) {
 	var tx *gorm.DB
 	if logType == LogTypeUnknown {
 		tx = LOG_DB
@@ -305,6 +309,15 @@ func GetAllLogs(logType int, startTimestamp int64, endTimestamp int64, modelName
 
 	if modelName != "" {
 		tx = tx.Where("logs.model_name like ?", modelName)
+	}
+	if len(tokenIDs) > 0 {
+		tx = tx.Where("logs.token_id IN ?", tokenIDs)
+	}
+	if afterID != nil {
+		tx = tx.Where("logs.id > ?", *afterID)
+	}
+	if throughID != nil {
+		tx = tx.Where("logs.id <= ?", *throughID)
 	}
 	if username != "" {
 		tx = tx.Where("logs.username = ?", username)
