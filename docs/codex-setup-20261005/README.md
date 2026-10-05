@@ -92,6 +92,8 @@ ssh -o BatchMode=yes -J serverA serverB "python3 /opt/carpool/releases/newapi-co
 
 本地开始时已有大量未提交的拼车、Luna、敏感词和Cline修改。它们与生产Go归档逐文件核对一致；未reset/clean、未混入本轮提交。部署可复现依据是生产归档+本轮指定文件+SHA清单，不把某个Git提交冒称为包含全部历史定制的干净基线。
 
+本轮代码提交 `3351c13d`，router和会话登记仅暂存本轮新增行，历史未提交修改仍保留。服务器另留 `feature-source.tar.gz`（向导/脚本/构建与发布源码）配合完整589项Go源码归档及内嵌资源，便于接续。
+
 ## 用户验收
 
 1. 刷新当前classic密钥管理页，选择有效Key，点击「Codex 快速配置」。
