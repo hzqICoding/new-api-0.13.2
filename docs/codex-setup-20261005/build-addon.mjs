@@ -8,7 +8,9 @@ const require = createRequire(path.resolve(here, '../../web/classic/package.json
 const { build } = require('esbuild');
 const outdir = path.resolve(process.argv[2] || 'E:/tmp/newapi-codex-setup-20261005/addon');
 mkdirSync(outdir, { recursive: true });
-const ns = '/assets/codex-setup-20261005';
+const namespace = process.argv[3] || 'codex-setup-20261005';
+if (!/^[a-z0-9-]+$/.test(namespace)) throw new Error('Invalid asset namespace');
+const ns = `/assets/${namespace}`;
 const core = `${ns}/react-core-D-iPSUlg.js`;
 const shims = {
   react: `import {r as React} from '${core}'; export default React; export const {Children,Component,PureComponent,Fragment,StrictMode,Suspense,Profiler,createElement,cloneElement,isValidElement,createContext,createRef,forwardRef,lazy,memo,useCallback,useContext,useDebugValue,useDeferredValue,useEffect,useId,useImperativeHandle,useInsertionEffect,useLayoutEffect,useMemo,useReducer,useRef,useState,useSyncExternalStore,useTransition,startTransition,version,__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED}=React;`,

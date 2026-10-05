@@ -110,8 +110,53 @@ func TestTokenCodexConfigOwnershipAndGroupIntersection(t *testing.T) {
 		t.Fatal(err)
 	}
 	_, result, _ = getCodexTestConfig(t, token.Id, 1)
-	if result.Configurable || result.ReasonCode == nil || *result.ReasonCode != "group_unavailable" {
+	if result.Configurable || result.ReasonCode == nil || *result.ReasonCode != "group_forbidden" {
 		t.Fatalf("%+v", result)
+	}
+}
+
+// Regression for token #490: unlimited quota with a negative balance is valid,
+// but a token does not retain a subscription-only group after the owner reverts.
+func TestTokenCodexConfigSubscriptionGroupReverted(t *testing.T) {
+	db, token := setupCodexConfigTest(t)
+	if err := db.Model(token).Updates(map[string]interface{}{
+		"group": "daycard", "unlimited_quota": true, "remain_quota": -588,
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Model(&model.User{}).Where("id = ?", 1).Update("group", "daycard").Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := ratio_setting.UpdateGroupRatioByJSONString(`{"default":1,"vip":1,"daycard":0.2}`); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Create(&model.Ability{Group: "daycard", Model: "gpt-5.6-sol", ChannelId: 50, Enabled: true}).Error; err != nil {
+		t.Fatal(err)
+	}
+	_, active, _ := getCodexTestConfig(t, token.Id, 1)
+	if !active.Configurable || len(active.Models) != 1 {
+		t.Fatalf("own subscription group must remain usable: %+v", active)
+	}
+	if err := db.Model(&model.User{}).Where("id = ?", 1).Update("group", "default").Error; err != nil {
+		t.Fatal(err)
+	}
+	_, expired, _ := getCodexTestConfig(t, token.Id, 1)
+	if expired.Configurable || expired.ReasonCode == nil || *expired.ReasonCode != "group_forbidden" {
+		t.Fatalf("old token must not bypass reverted group: %+v", expired)
+	}
+	if err := db.Model(token).Update("group", "default").Error; err != nil {
+		t.Fatal(err)
+	}
+	_, changed, _ := getCodexTestConfig(t, token.Id, 1)
+	if !changed.Configurable {
+		t.Fatalf("available group and unlimited quota must work: %+v", changed)
+	}
+	if err := ratio_setting.UpdateGroupRatioByJSONString(`{"vip":1}`); err != nil {
+		t.Fatal(err)
+	}
+	_, retired, _ := getCodexTestConfig(t, token.Id, 1)
+	if retired.Configurable || retired.ReasonCode == nil || *retired.ReasonCode != "group_retired" {
+		t.Fatalf("retired group needs a distinct reason: %+v", retired)
 	}
 }
 

@@ -14,6 +14,9 @@ import {
   normalizeApiKey,
   renderAuth,
   renderConfig,
+  requireSetupSuccess,
+  setupError,
+  setupErrorMessage,
   suggestTarget,
   validateMetadata,
 } from '../../../../lib/codex-setup/config';
@@ -135,9 +138,8 @@ export default function CodexSetupModal({
       })
       .then(({ data: response }) => {
         if (!current(ticket)) return;
-        if (!response?.success) throw new Error('metadata_unavailable');
         const checked = validateMetadata(
-          response.data,
+          requireSetupSuccess(response),
           tokenId,
           window.location.origin,
         );
@@ -149,13 +151,8 @@ export default function CodexSetupModal({
             : checked.supported_targets[0],
         );
       })
-      .catch(() => {
-        if (current(ticket))
-          setError(
-            t(
-              '当前令牌无法配置，请检查令牌状态、可用模型和管理员服务地址后重试。',
-            ),
-          );
+      .catch((error) => {
+        if (current(ticket)) setError(t(setupErrorMessage(error)));
       })
       .finally(() => {
         if (current(ticket)) setLoading(false);
@@ -223,14 +220,13 @@ export default function CodexSetupModal({
         },
       );
       if (!current(ticket)) return;
-      if (!response.data?.success) throw new Error('metadata_unavailable');
       const checked = validateMetadata(
-        response.data.data,
+        requireSetupSuccess(response.data),
         selected.tokenId,
         window.location.origin,
       );
       if (checked.base_url !== metadata.base_url)
-        throw new Error('endpoint_changed');
+        throw setupError('endpoint_changed');
       const config = renderConfig(checked, selected);
       // Always obtain the real key at the actual export boundary; never use resolvedTokenKeys.
       const reveal = await request.post(
@@ -244,9 +240,9 @@ export default function CodexSetupModal({
         },
       );
       if (!current(ticket)) return;
-      if (!reveal.data?.success) throw new Error('reveal_failed');
-      rawKey = normalizeApiKey(reveal.data.data?.key);
-      reveal.data.data.key = '';
+      const revealed = requireSetupSuccess(reveal.data, 'reveal_failed');
+      rawKey = normalizeApiKey(revealed?.key);
+      revealed.key = '';
       if (kind === 'zip') {
         const { buildCodexSetupZip } = await import(
           '../../../../lib/codex-setup/bundle'
@@ -272,11 +268,9 @@ export default function CodexSetupModal({
         );
       }
       if (current(ticket)) setDownloaded(kind);
-    } catch {
+    } catch (error) {
       if (current(ticket))
-        setError(
-          t('导出失败或令牌权限已变化，请重试。不会为此新建或轮换令牌。'),
-        );
+        setError(t(setupErrorMessage(error, 'export_failed')));
     } finally {
       rawKey = '';
       if (current(ticket)) {

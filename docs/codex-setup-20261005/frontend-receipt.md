@@ -55,3 +55,13 @@ pwsh.exe -NoProfile -File scripts/verify-codex-setup-scripts.ps1
 2. 单个与批量创建分别验证自动引导及实际新 IDs 选择；取消向导不影响已创建令牌。
 3. 切系统、模型、令牌；导出中关闭/换用户/禁用令牌，迟到结果不得继续下载。
 4. 下载 ZIP 与两份手动文件，在真正运行 Codex 的电脑验证；本机 FULL 测试可能产生少量用量，由用户自行选择。
+
+## 2026-10-05 追加：配置阻断原因不再被泛化
+
+本次只修改 `config.js`、`CodexSetupModal.jsx`、`verify-codex-setup.mjs` 和本回执。未修改后端、权限、脚本模板、发布脚本，未提交或部署。
+
+- 修复 `validateMetadata` 丢弃 `reason_code` 及 Modal 两处 catch 再次泛化的问题。首次加载与导出前元数据刷新都使用同一套本地白名单提示，受控 reveal 失败也使用安全错误映射。
+- 支持 `token_disabled` / `token_expired` / `token_exhausted` / `user_disabled` / `invalid_server_address` / `group_unavailable` / `group_forbidden` / `group_retired` / `no_compatible_model`。`group_forbidden` 明确显示：**“此令牌指定的分组不在当前账号可用范围内。请编辑令牌选择可用分组，或恢复对应订阅后重试。”** 保留原权限拦截，不根据前端错误自行放宽分组。
+- HTTP 401、403、404、429、5xx、网络异常和超时分别显示操作建议；本地模板版本、令牌归属、URL、系统/模型、Key 格式和线路变更错误也保留安全明确提示。
+- 显示内容始终来自本地字符串白名单；不转录服务端 `reason` / `message`，不显示或记录原始 Axios error、响应体、异常 message 或 Key。URL 构造器等异常被转换为安全错误；未知 reason_code 使用静态兜底。
+- 最新 `node scripts/verify-codex-setup.mjs`：**15 组通过 + 14 个 Bash URL 谓词通过**。新增覆盖已知/未知 reason_code、初次与导出阶段复用、HTTP/网络/超时区分、本地校验信息保留、响应/异常夹带假 Key 不泄漏、修改异常 message 仍不被显示。仅假 Key，无真实网络或模型调用。三个源码/测试文件已按现有 Prettier 格式化，可供主代理构建增量 addon。

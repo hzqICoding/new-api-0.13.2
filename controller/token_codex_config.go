@@ -147,8 +147,15 @@ func GetTokenCodexConfig(c *gin.Context) {
 	}
 	group := user.Group
 	if token.Group != "" {
-		if !service.GroupInUserUsableGroups(user.Group, token.Group) || (token.Group != "auto" && !ratio_setting.ContainsGroupRatio(token.Group)) {
-			result.block("group_unavailable", "此令牌的分组已不可用或无权访问")
+		// Keep the same group authorization as TokenAuth. An old token can
+		// outlive the subscription that granted its owner's previous group.
+		if !service.GroupInUserUsableGroups(user.Group, token.Group) {
+			result.block("group_forbidden", "此令牌指定的分组不在当前账号可用范围内，请编辑令牌选择可用分组，或恢复对应订阅后重试")
+			finish()
+			return
+		}
+		if token.Group != "auto" && !ratio_setting.ContainsGroupRatio(token.Group) {
+			result.block("group_retired", "此令牌指定的分组已停用，请编辑令牌选择可用分组，或联系管理员恢复该分组")
 			finish()
 			return
 		}

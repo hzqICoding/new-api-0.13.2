@@ -3,7 +3,8 @@ import path from 'node:path';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const root = path.resolve(process.argv[2] || 'E:/tmp/newapi-codex-setup-20261005/build/web/classic/dist');
-const code = fs.readFileSync(path.join(root, 'assets/codex-setup-20261005/index-luna-0216aa8f9328.js'), 'utf8');
+const namespace = process.argv[3] || 'codex-setup-20261005';
+const code = fs.readFileSync(path.join(root, 'assets', namespace, 'index-luna-0216aa8f9328.js'), 'utf8');
 const events = [];
 const context = vm.createContext({
   a: { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) },

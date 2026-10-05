@@ -12,6 +12,9 @@ import {
   normalizeEndpoint,
   renderConfig,
   renderAuth,
+  requireSetupSuccess,
+  setupError,
+  setupErrorMessage,
   validateMetadata,
 } from '../src/lib/codex-setup/config.js';
 import {
@@ -114,6 +117,173 @@ test('metadata is bound to exact token/template and effective model intersection
       .default_model,
     null,
   );
+});
+
+const displayedError = (action, fallback) => {
+  let thrown = false;
+  let failure;
+  try {
+    action();
+  } catch (error) {
+    thrown = true;
+    failure = error;
+  }
+  assert.ok(thrown, 'expected a setup error');
+  return setupErrorMessage(failure, fallback);
+};
+
+test('known metadata reason codes retain distinct safe actionable messages on load and export refresh', () => {
+  const expected = {
+    token_disabled: /未处于启用状态/,
+    token_expired: /已到期.*有效期/,
+    token_exhausted: /额度已耗尽/,
+    user_disabled: /账号已停用/,
+    invalid_server_address: /服务地址配置无效/,
+    group_unavailable: /分组暂不可用/,
+    group_forbidden: /分组不在当前账号可用范围内.*编辑令牌.*恢复对应订阅/,
+    group_retired: /分组已停用或删除/,
+    no_compatible_model: /没有本向导支持的 Codex 模型/,
+  };
+  for (const [code, pattern] of Object.entries(expected)) {
+    const data = {
+      ...metadata,
+      configurable: false,
+      reason_code: code,
+      reason: `<script>${fakeKey}</script>`,
+    };
+    for (const fallback of ['metadata_unavailable', 'export_failed']) {
+      const message = displayedError(
+        () =>
+          validateMetadata(requireSetupSuccess({ success: true, data }), 27),
+        fallback,
+      );
+      assert.match(message, pattern, code);
+      assert.ok(!message.includes(fakeKey) && !message.includes('<script>'));
+    }
+  }
+  const knownEnvelope = displayedError(() =>
+    requireSetupSuccess({
+      success: false,
+      reason_code: 'group_forbidden',
+      message: fakeKey,
+    }),
+  );
+  assert.match(knownEnvelope, expected.group_forbidden);
+  const unknown = displayedError(() =>
+    validateMetadata(
+      {
+        ...metadata,
+        configurable: false,
+        reason_code: fakeKey,
+        reason: fakeKey,
+      },
+      27,
+    ),
+  );
+  assert.match(unknown, /暂时无法读取/);
+  assert.ok(!unknown.includes(fakeKey));
+});
+
+test('HTTP, network and timeout failures are distinguished without trusting Axios or response text', () => {
+  const expected = {
+    401: /登录已过期/,
+    403: /无权读取/,
+    404: /不存在/,
+    429: /限流/,
+    500: /服务器暂时异常/,
+    503: /服务器暂时异常/,
+  };
+  for (const [status, pattern] of Object.entries(expected)) {
+    const error = {
+      isAxiosError: true,
+      message: fakeKey,
+      response: {
+        status: Number(status),
+        data: { message: fakeKey, reason: fakeKey },
+      },
+      config: { headers: { Authorization: fakeKey } },
+    };
+    for (const fallback of ['metadata_unavailable', 'export_failed']) {
+      const message = setupErrorMessage(error, fallback);
+      assert.match(message, pattern);
+      assert.ok(!message.includes(fakeKey));
+    }
+  }
+  assert.match(
+    setupErrorMessage({ code: 'ERR_NETWORK', message: fakeKey }),
+    /网络连接失败/,
+  );
+  assert.match(
+    setupErrorMessage({ code: 'ECONNABORTED', message: fakeKey }),
+    /请求超时/,
+  );
+  assert.match(
+    setupErrorMessage({ isAxiosError: true, request: {}, message: fakeKey }),
+    /网络连接失败/,
+  );
+  assert.match(
+    setupErrorMessage(new Error(fakeKey), 'export_failed'),
+    /文件导出未完成/,
+  );
+  assert.match(
+    displayedError(() =>
+      requireSetupSuccess(
+        { success: false, message: fakeKey },
+        'reveal_failed',
+      ),
+    ),
+    /无法读取.*完整密钥/,
+  );
+  assert.ok(
+    !setupErrorMessage({
+      name: 'SafeSetupError',
+      code: fakeKey,
+      message: fakeKey,
+    }).includes(fakeKey),
+  );
+});
+
+test('local schema, URL, selection and credential failures survive safe UI formatting', () => {
+  assert.match(
+    displayedError(() =>
+      validateMetadata({ ...metadata, template_version: 'unknown' }, 27),
+    ),
+    /模板版本不兼容/,
+  );
+  assert.match(
+    displayedError(() => validateMetadata(metadata, 28)),
+    /令牌与当前选择不一致/,
+  );
+  assert.match(
+    displayedError(() =>
+      validateMetadata({ ...metadata, supported_targets: null }, 27),
+    ),
+    /结构不完整/,
+  );
+  assert.match(
+    displayedError(() => normalizeEndpoint('', 'invalid-origin')),
+    /当前页面不是可用的 HTTPS/,
+  );
+  assert.match(
+    displayedError(() => normalizeEndpoint('https://api.test:99999/v1')),
+    /服务地址配置无效/,
+  );
+  assert.match(
+    displayedError(() =>
+      renderConfig(metadata, { target: 'linux', model: 'not-supported' }),
+    ),
+    /所选系统或模型已不可用/,
+  );
+  assert.match(
+    displayedError(() => normalizeApiKey(fakeKey + '\n')),
+    /未取得有效的完整密钥/,
+  );
+  const error = setupError('endpoint_changed');
+  error.message = fakeKey;
+  assert.match(setupErrorMessage(error, 'export_failed'), /接入地址已变化/);
+  error.code = '__proto__';
+  assert.equal(typeof setupErrorMessage(error), 'string');
+  assert.ok(!setupErrorMessage(error).includes(fakeKey));
 });
 test('TOML/auth are separate with exact provider and raw key round-trip', () => {
   const config = renderConfig(metadata, {

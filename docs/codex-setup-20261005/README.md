@@ -4,6 +4,7 @@
 
 | 日期 | 版本 | 变更说明 |
 |---|---|---|
+| 2026-10-05 | r15.11 · 已发布 | 用户反馈#490快速配置只显示泛化错误。已核实旧日卡分组授权随订阅到期失效，保持真实权限拦截；前端显示具体原因及处理方法。新旧公网资源及服务检查通过，实际页面待用户确认。 |
 | 2026-10-05 | r15.10 · 已发布 | classic 密钥页接入已有令牌/创建成功后的 Codex 快速配置，四系统ZIP与本机检查；补令牌专属只读元数据和创建ID。保留原生产定制，未改计费/额度/数据库结构。真实浏览器及用户电脑验收待反馈。 |
 
 ## 已上线的行为
@@ -103,3 +104,37 @@ ssh -o BatchMode=yes -J serverA serverB "python3 /opt/carpool/releases/newapi-co
 5. 验证单个创建后引导、批量选择实际新ID、禁用/到期Key不可导出、切用户/关闭后不继续下载。
 
 网站回滚不能收回已下载ZIP或恢复用户电脑；本机恢复使用脚本的Restore选项。保持模板/脚本版本配套，不把API Token传入 URL 或脚本命令参数。
+
+## #490 提示不明确修复（2026-10-05）
+
+### 实际原因
+
+只读查询确认#490启用、永不过期、无限额度；`remain_quota=-588`不影响无限额度模式。ServerAddress合法。令牌指定`GPT-daycard`，所有者当前用户组为`default`；订阅43状态`expired`、结束于2026-08-05，升级组为`GPT-daycard`、原组为`default`。全局可用分组与default特殊分组均未授权日卡组。因此它在现有`TokenAuth`中也会被拒绝，并非下载向导新增了错误权限限制；最后成功计费记录为2026-08-04。
+
+前端的问题是`validateMetadata`抛错后，初始加载和导出catch都把服务端提供的原因替换成笼统提示，用户无法区分分组、Key状态、模型和地址问题。
+
+### 改动
+
+- 后端保持分组判断顺序及权限条件，拆分`group_forbidden`与`group_retired`，不改变请求路由、用户分组或订阅。
+- 前端使用受控错误码映射本地中文提示，兼容旧`group_unavailable`；初次读取与下载前再次读取均保留具体原因。网络、HTTP、配置结构和地址错误分别提示，服务器原始文本、Axios对象、Key不会进入提示。
+- 此Key仍需用户在编辑令牌中选择当前可用分组（例如`default`），或恢复适用订阅；本次排查未更改#490、用户、订阅、渠道或额度。
+- 复用`/root/codex_setup_scripts`处理3个前端文件与定向回归，主会话负责只读诊断、后端区分、整合及发布；无新建子会话。
+
+### 验证与制品
+
+Go定向回归通过，新增模拟“用户订阅组→default回退、无限额度负数、选择可用分组恢复配置、已弃用分组”案例。前端15组验证及14个Bash URL谓词通过，无真实Key/渠道/CLI调用。源文件和生产增量构建结果以最终发布回执为准。
+
+修复从本地已核验的r15.10完整589项源码和594项资源重建，仅覆盖2个后端文件、添加`codex-error-fix-20261005`资源命名空间及切换首页；保持之前593项非首页资源原哈希，包括r15.10的旧URL。构建脚本`prepare_error_fix.py`、`build-addon.mjs`，部署入口`deploy_error_fix.py`。构建目录`E:/tmp/newapi-codex-error-fix-20261005`，基线固定r15.10镜像`71d2e997…551e7`；未直接覆盖生产定制前端。
+
+已发布`v0.13.2-carpool-r15.11-codex-error-fix-20261005`。镜像`hzqicoding/new-api:carpool-r15.11-codex-error-fix-20261005`，ID `sha256:57967c259db06950d9e9668177b889f93e63968d4185278d6e1e821993bd9815`；程序SHA-256 `3f6ed55cca67a167781d2172fc9be59f50f418afb867e5aab9f39a46b7170694`。
+
+验证结果：classic完整Vite构建通过（保留原Browserslist、Lottie eval、大包提示）；生产入口与ZIP模块静态链接9模块通过，行按钮/精确创建ID/失效事件/Luna保留的定向检查通过。服务器内嵌714项资源清单全匹配，临时启动/创建脱敏ID/无模型元数据/匿名鉴权检查通过并已清理临时容器与卷。切换后版本、程序哈希、拼车日志接口/health、6个新静态资源通过；options摘要及其他容器ID/启动时间不变。公网版本及7个新旧资源哈希通过，包括r15.10旧入口URL。
+
+发布目录`serverB:/opt/carpool/releases/newapi-codex-error-fix-20261005/`，保留源码/前端归档与清单、修复源文件、验证回执；回滚容器`new-api-rollback-newapi-codex-error-fix-20261005`（r15.10）停止保留。确认没有后续发布后可执行：
+
+```powershell
+ssh -o BatchMode=yes -J serverA serverB "python3 /opt/carpool/releases/newapi-codex-error-fix-20261005/deploy_error_fix.py verify"
+ssh -o BatchMode=yes -J serverA serverB "python3 /opt/carpool/releases/newapi-codex-error-fix-20261005/deploy_error_fix.py rollback"
+```
+
+用户验收：Ctrl+F5刷新密钥页，#490应显示明确的分组权限提示；选择当前有权使用的令牌，或自行编辑#490为可用分组后再打开，确认可以进入系统/模型选择与下载。实际浏览器、用户电脑和付费CLI调用仍由用户验收；本轮未执行真实模型调用，也未更改用户业务数据。
