@@ -88,7 +88,9 @@ try {
   $newMainPath = Join-Path $distRoot "assets/$newMainName"
 
   [IO.File]::WriteAllBytes($newMainPath, $patchedBytes)
-  Remove-Item -LiteralPath $oldMainPath
+  # Lazy chunks import symbols from the original entry filename. Preserve that
+  # identity as a forwarding module, never a second application initializer.
+  [IO.File]::WriteAllText($oldMainPath, "export * from `"./$newMainName`";`n", $utf8NoBom)
 
   $oldScriptReference = "src=`"/assets/$oldMainName`""
   $newScriptReference = "src=`"/assets/$newMainName`""
@@ -120,7 +122,7 @@ try {
   }
 
   $afterFiles = @(Get-ChildItem -LiteralPath $workRoot -Recurse -File)
-  if ($afterFiles.Count -ne $beforeFiles.Count) {
+  if ($afterFiles.Count -ne ($beforeFiles.Count + 1)) {
     throw "File count changed from $($beforeFiles.Count) to $($afterFiles.Count)."
   }
 
@@ -159,8 +161,8 @@ try {
   }
 
   $verifiedFiles = @(Get-ChildItem -LiteralPath $verifyRoot -Recurse -File)
-  if ($verifiedFiles.Count -ne 357) {
-    throw "Output archive verification found $($verifiedFiles.Count) files instead of 357."
+  if ($verifiedFiles.Count -ne 358) {
+    throw "Output archive verification found $($verifiedFiles.Count) files instead of 358."
   }
   $verifiedMainPath = Join-Path $verifyRoot $newMainRelative
   $verifiedIndexPath = Join-Path $verifyRoot 'web/classic/dist/index.html'
@@ -174,13 +176,29 @@ try {
     throw 'Output archive bundle verification failed.'
   }
 
+  # Existing browsers may cache the pre-patch application under the old URL.
+  # Publish a fresh module namespace as well as keeping the forwarding entry.
+  $namespaceBuilder = Join-Path $PSScriptRoot '../frontend-module-fix-20260925/prepare_assets.py'
+  if (-not (Test-Path -LiteralPath $namespaceBuilder -PathType Leaf)) {
+    throw 'Missing module-graph namespace builder; refusing unsafe frontend archive.'
+  }
+  $namespaceArchive = Join-Path $workRoot 'frontend-cache-isolated.tar.gz'
+  $namespaceManifest = Join-Path $workRoot 'frontend-cache-isolated.json'
+  & python $namespaceBuilder $outputPath $namespaceArchive $namespaceManifest
+  if ($LASTEXITCODE -ne 0) {
+    throw 'Frontend module namespace generation failed.'
+  }
+  $namespaceResult = Get-Content -Raw -LiteralPath $namespaceManifest | ConvertFrom-Json
+  Move-Item -LiteralPath $namespaceArchive -Destination $outputPath -Force
+  $newMainRelative = "web/classic/dist/assets/$($namespaceResult.namespace)/$newMainName"
+  $patchedSha256 = $namespaceResult.files.$newMainRelative
   $outputSha256 = (Get-FileHash -LiteralPath $outputPath -Algorithm SHA256).Hash
   [pscustomobject]@{
     InputArchive = $inputPath
     InputSha256 = $actualArchiveSha256
     OutputArchive = $outputPath
     OutputSha256 = $outputSha256
-    FileCount = $verifiedFiles.Count
+    FileCount = $namespaceResult.total_files
     OldMainBundle = $oldMainRelative
     NewMainBundle = $newMainRelative
     NewMainBundleSha256 = $patchedSha256

@@ -1,0 +1,53 @@
+{
+  "passed": true,
+  "version": "v0.13.2-carpool-r15.13-codex-routes-20261005",
+  "routes": [
+    {
+      "origin": "https://api.1aicode.space",
+      "version": "v0.13.2-carpool-r15.13-codex-routes-20261005",
+      "anonymous_models_status": 401
+    },
+    {
+      "origin": "https://api.dm.1aicode.space",
+      "version": "v0.13.2-carpool-r15.13-codex-routes-20261005",
+      "anonymous_models_status": 401
+    }
+  ],
+  "public_assets": [
+    {
+      "file": "web/classic/dist/assets/codex-routes-20261005/codex-bootstrap.js",
+      "sha256": "b3debe4af3688f50562b8db85a5f00920b69ca0023d97c1749ff2743bb20298e"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-routes-20261005/codex-setup-EB7MDD2M.js",
+      "sha256": "72cb413ef08c1bc2520595db2026b7c162265b8342fb30a4c55325ccc6458571"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-routes-20261005/codex-setup-entry.css",
+      "sha256": "87722f73e5e323985c0fc6521e33b3aad60ef003f7fd6d1e86183779eb6954ec"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-routes-20261005/codex-setup-entry.js",
+      "sha256": "73d6ea2735ca7f019c13bfc228ded839493c6590f9eaaafe415b914a8ca970b5"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-routes-20261005/codex-setup-J2YGTIRV.js",
+      "sha256": "ef263e2ff86a1d3cf95b5ebcef11e662f03ba2e2f3f506b2ea798ab9b331ecdb"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-routes-20261005/index-luna-0216aa8f9328.js",
+      "sha256": "a0e0faaa8e1aa1a5ddd6d29da4bd7bf446c56b42323a07c03d9498bf30de8ae3"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-routes-20261005/react-core-D-iPSUlg.js",
+      "sha256": "0fd6c7bc24333ca7b66c4f838ffe87edf41fb952f43380dd80e467a504282422"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-ui-20261005/codex-setup-entry.js",
+      "sha256": "12860c51e5093ebcc32b47d1d79d6a9090b7916e1c0794bd47f5b8d6a58d20b7"
+    }
+  ],
+  "stylesheet_linked": true,
+  "previous_release_url_preserved": true,
+  "real_model_calls": 0
+}

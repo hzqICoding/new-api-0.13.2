@@ -1,0 +1,13 @@
+{
+  "source_files": 589,
+  "source_changes": [
+    "controller/token_codex_config.go",
+    "controller/token_codex_config_test.go"
+  ],
+  "frontend_files": 714,
+  "preserved_old_assets": 593,
+  "old_assets_changed": [
+    "web/classic/dist/index.html"
+  ],
+  "namespace": "codex-error-fix-20261005"
+}

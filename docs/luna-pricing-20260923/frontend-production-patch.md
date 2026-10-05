@@ -1,5 +1,7 @@
 # Luna 定价前端生产资源补丁回执
 
+> 本文是2026-09-23初始回执。删除旧入口导致的看板分包404已在[09-25模块修复](../frontend-module-fix-20260925/README.md)解决；现有patch脚本会保留转发入口并调用该目录的prepare_assets.py。旧357项/旧哈希仅为历史证据，当前基线见[维护索引](../README.md)，不能照旧删除入口。
+
 ## 结果
 
 `calculateModelPrice` 在完成选中分组或最低倍率分组判定后，若 `/api/pricing` 记录包含有限数值 `group_ratio_override`，仅用该值覆盖最终计算倍率 `usedGroupRatio`。`usedGroup`、`enable_groups`、可用分组和筛选逻辑保持不变；字段缺失或不是数值时完全沿用原逻辑。

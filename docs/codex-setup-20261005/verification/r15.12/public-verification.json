@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "version": "v0.13.2-carpool-r15.12-codex-ui-20261005",
+  "public_assets": [
+    {
+      "file": "web/classic/dist/assets/codex-ui-20261005/codex-bootstrap.js",
+      "sha256": "b3debe4af3688f50562b8db85a5f00920b69ca0023d97c1749ff2743bb20298e"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-ui-20261005/codex-setup-entry.css",
+      "sha256": "87722f73e5e323985c0fc6521e33b3aad60ef003f7fd6d1e86183779eb6954ec"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-ui-20261005/codex-setup-entry.js",
+      "sha256": "12860c51e5093ebcc32b47d1d79d6a9090b7916e1c0794bd47f5b8d6a58d20b7"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-ui-20261005/codex-setup-PQBKTBRV.js",
+      "sha256": "c42c3ee7ffbf83053cd04fa32562c26ce68df4e6fd4bc4d79c8cf46a88196d1e"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-ui-20261005/codex-setup-Y7HLTOBR.js",
+      "sha256": "972bfd7689ab1d3c5caa0d2b98d87f4f8d13308780996cbfb72fb80ef988d13f"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-ui-20261005/index-luna-0216aa8f9328.js",
+      "sha256": "2a88989a45cf42275752da5d595112a0423a5912c7347499c59f1705852fdb30"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-ui-20261005/react-core-D-iPSUlg.js",
+      "sha256": "0fd6c7bc24333ca7b66c4f838ffe87edf41fb952f43380dd80e467a504282422"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-error-fix-20261005/codex-setup-entry.js",
+      "sha256": "9ef06ae33ca398969d235001462484edd7b98fdc232ee65c72b09fba9ef2ab72"
+    }
+  ],
+  "stylesheet_linked": true,
+  "previous_release_url_preserved": true
+}

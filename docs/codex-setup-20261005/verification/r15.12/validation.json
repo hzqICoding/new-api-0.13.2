@@ -1,0 +1,12 @@
+{
+  "classic_build": "passed",
+  "production_addon_build": "passed",
+  "js_groups": 15,
+  "bash_url_cases": 14,
+  "scoped_css_selectors": 180,
+  "production_static_link_modules": 9,
+  "old_frontend_nonindex_assets_preserved": 713,
+  "backend_source_unchanged": true,
+  "browser_acceptance": false,
+  "real_model_calls": 0
+}

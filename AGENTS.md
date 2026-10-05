@@ -15,6 +15,10 @@ This is an AI API gateway/proxy built with Go. It aggregates 40+ upstream AI pro
 
 ## Architecture
 
+### 本安装实例的维护接续
+
+修改本地定制或准备发布前，先读 [docs/README.md](docs/README.md)，再读对应专题记录。当前生产可能包含未提交的历史业务补丁；以运行版本、归档和SHA清单核实基线，不reset/clean，不将历史发布脚本当成最新部署入口。该索引不替代下面的项目通用规则。
+
 Layered architecture: Router -> Controller -> Service -> Model
 
 ```

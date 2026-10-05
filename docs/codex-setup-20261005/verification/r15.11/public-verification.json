@@ -1,0 +1,35 @@
+{
+  "passed": true,
+  "version": "v0.13.2-carpool-r15.11-codex-error-fix-20261005",
+  "public_assets": [
+    {
+      "file": "web/classic/dist/assets/codex-error-fix-20261005/codex-bootstrap.js",
+      "sha256": "b3debe4af3688f50562b8db85a5f00920b69ca0023d97c1749ff2743bb20298e"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-error-fix-20261005/codex-setup-entry.js",
+      "sha256": "9ef06ae33ca398969d235001462484edd7b98fdc232ee65c72b09fba9ef2ab72"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-error-fix-20261005/codex-setup-PQBKTBRV.js",
+      "sha256": "c42c3ee7ffbf83053cd04fa32562c26ce68df4e6fd4bc4d79c8cf46a88196d1e"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-error-fix-20261005/codex-setup-Y7HLTOBR.js",
+      "sha256": "972bfd7689ab1d3c5caa0d2b98d87f4f8d13308780996cbfb72fb80ef988d13f"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-error-fix-20261005/index-luna-0216aa8f9328.js",
+      "sha256": "be3cc2a21575b5d82b8b26029a611a06facdf91d14548be0b126232211ccd217"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-error-fix-20261005/react-core-D-iPSUlg.js",
+      "sha256": "0fd6c7bc24333ca7b66c4f838ffe87edf41fb952f43380dd80e467a504282422"
+    },
+    {
+      "file": "web/classic/dist/assets/codex-setup-20261005/codex-setup-entry.js",
+      "sha256": "dc7b6d1dc67c99a329db354159a633b19ea58b363f6078f0fc5c93567e5f93d0"
+    }
+  ],
+  "previous_release_url_preserved": true
+}

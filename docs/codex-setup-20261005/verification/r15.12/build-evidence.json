@@ -1,0 +1,12 @@
+{
+  "source_files": 589,
+  "backend_source_unchanged": true,
+  "frontend_files": 835,
+  "preserved_old_assets": 713,
+  "old_assets_changed": [
+    "web/classic/dist/index.html"
+  ],
+  "namespace": "codex-ui-20261005",
+  "stylesheet": "codex-setup-entry.css",
+  "css_sha256": "87722f73e5e323985c0fc6521e33b3aad60ef003f7fd6d1e86183779eb6954ec"
+}

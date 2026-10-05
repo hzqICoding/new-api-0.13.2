@@ -1,0 +1,13 @@
+{
+  "classic_build": "passed",
+  "production_addon_build": "passed",
+  "js_groups": 20,
+  "bash_url_cases": 14,
+  "route_os_combinations": 8,
+  "default_route": "cf",
+  "backend_source_unchanged": true,
+  "production_static_link_modules": 9,
+  "old_frontend_nonindex_assets_preserved": 834,
+  "browser_acceptance": false,
+  "real_model_calls": 0
+}
