@@ -18,6 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React from 'react';
+import { openCodexSetup } from '../../../lib/codex-setup/session';
 import {
   Button,
   Dropdown,
@@ -383,6 +384,9 @@ const renderOperations = (
 
   return (
     <Space wrap>
+      <Button size='small' type='primary' disabled={record.status !== 1} onClick={() => openCodexSetup({ tokenIds: [record.id] })}>
+        {t('Codex 快速配置')}
+      </Button>
       <SplitButtonGroup
         className='overflow-hidden'
         aria-label={t('项目操作按钮组')}

@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "image": "sha256:71d2e997c6bf6c8bbd5983ddbf9041d01e298712afb15aa27688a448964551e7",
+  "asset_checks": 6,
+  "token_create_metadata_anonymous_contract": true,
+  "real_model_calls": 0,
+  "browser_test": false
+}

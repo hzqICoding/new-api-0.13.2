@@ -29,6 +29,7 @@ import {
 } from '../../helpers';
 import { ITEMS_PER_PAGE } from '../../constants';
 import { useTableCompactMode } from '../common/useTableCompactMode';
+import { invalidateCodexSetup } from '../../lib/codex-setup/session';
 import {
   fetchTokenKey as fetchTokenKeyById,
   fetchTokenKeysBatch,
@@ -272,6 +273,7 @@ export const useTokensData = (openFluentNotification, openCCSwitchModal) => {
 
   // Manage token function (delete, enable, disable)
   const manageToken = async (id, action, record) => {
+    invalidateCodexSetup([id]);
     setLoading(true);
     let data = { id };
     let res;
@@ -393,6 +395,7 @@ export const useTokensData = (openFluentNotification, openCCSwitchModal) => {
     setLoading(true);
     try {
       const ids = selectedKeys.map((token) => token.id);
+      invalidateCodexSetup(ids);
       const res = await API.post('/api/token/batch', { ids });
       if (res?.data?.success) {
         const count = res.data.data || 0;

@@ -1,0 +1,21 @@
+{
+  "preserved_old_assets": 473,
+  "old_files_changed": [
+    "web/classic/dist/index.html"
+  ],
+  "existing_go_changed": [
+    "controller/token.go",
+    "router/api-router.go"
+  ],
+  "source_files": 589,
+  "frontend_files": 594,
+  "patches": [
+    "token-row-entry",
+    "create-batch-ids",
+    "create-exact-id",
+    "create-wizard",
+    "token-state-invalidation",
+    "token-edit-invalidation",
+    "batch-delete-invalidation"
+  ]
+}

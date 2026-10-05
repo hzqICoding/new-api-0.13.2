@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
   Notification,
   Button,
@@ -42,8 +42,13 @@ import CCSwitchModal from './modals/CCSwitchModal';
 import { useTokensData } from '../../../hooks/tokens/useTokensData';
 import { useIsMobile } from '../../../hooks/common/useIsMobile';
 import { createCardProPagination } from '../../../helpers/utils';
+import { UserContext } from '../../../context/User';
+import { openCodexSetup } from '../../../lib/codex-setup/session';
+import CodexSetupHost from './CodexSetupHost';
 
 function TokensPage() {
+  const [userState] = useContext(UserContext);
+  const userIdentity = userState?.user?.id;
   // Define the function first, then pass it into the hook to avoid TDZ errors
   const openFluentNotificationRef = useRef(null);
   const openCCSwitchModalRef = useRef(null);
@@ -382,7 +387,10 @@ function TokensPage() {
         editingToken={editingToken}
         visiable={showEdit}
         handleClose={closeEdit}
+        onCreated={(created) => openCodexSetup({ tokenIds: created.map((token) => token.id), userIdentity })}
       />
+
+      <CodexSetupHost request={API} t={t} userIdentity={userIdentity} />
 
       <CCSwitchModal
         visible={ccSwitchVisible}

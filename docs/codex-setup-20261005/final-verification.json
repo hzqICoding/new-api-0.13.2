@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "version": "v0.13.2-carpool-r15.10-codex-setup-20261005",
+  "image": "sha256:71d2e997c6bf6c8bbd5983ddbf9041d01e298712afb15aa27688a448964551e7",
+  "binary_sha256": "08fdbb5c80ee8b3fc6c373803721d3584895268901e2e3109c0f0d2e92fa6346",
+  "assets_verified": 6,
+  "options_unchanged": true,
+  "other_containers_unchanged": true,
+  "anonymous_config_rejected": true,
+  "luna_overrides": 1,
+  "browser_test": false
+}

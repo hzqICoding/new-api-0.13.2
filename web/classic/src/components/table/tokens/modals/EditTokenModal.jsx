@@ -56,6 +56,7 @@ import {
 } from '@douyinfe/semi-icons';
 import { useTranslation } from 'react-i18next';
 import { StatusContext } from '../../../../context/Status';
+import { invalidateCodexSetup } from '../../../../lib/codex-setup/session';
 
 const { Text, Title } = Typography;
 
@@ -65,6 +66,10 @@ const EditTokenModal = (props) => {
   const [loading, setLoading] = useState(false);
   const isMobile = useIsMobile();
   const formApiRef = useRef(null);
+  const activityRef = useRef(0);
+  const visibleRef = useRef(props.visiable);
+  visibleRef.current = props.visiable;
+  useEffect(() => { activityRef.current += 1; return () => { activityRef.current += 1; }; }, [props.visiable, props.editingToken.id]);
   const [models, setModels] = useState([]);
   const [groups, setGroups] = useState([]);
   const [showQuotaInput, setShowQuotaInput] = useState(false);
@@ -216,6 +221,7 @@ const EditTokenModal = (props) => {
   };
 
   const submit = async (values) => {
+    const submitEpoch = activityRef.current;
     setLoading(true);
     if (isEdit) {
       let { tokenCount: _tc, ...localInputs } = values;
@@ -238,6 +244,7 @@ const EditTokenModal = (props) => {
       }
       localInputs.model_limits = localInputs.model_limits.join(',');
       localInputs.model_limits_enabled = localInputs.model_limits.length > 0;
+      invalidateCodexSetup([Number(props.editingToken.id)]);
       let res = await API.put(`/api/token/`, {
         ...localInputs,
         id: parseInt(props.editingToken.id),
@@ -253,6 +260,7 @@ const EditTokenModal = (props) => {
     } else {
       const count = parseInt(values.tokenCount, 10) || 1;
       let successCount = 0;
+      const createdTokens = [];
       for (let i = 0; i < count; i++) {
         let { tokenCount: _tc, ...localInputs } = values;
         const baseName =
@@ -282,10 +290,15 @@ const EditTokenModal = (props) => {
         }
         localInputs.model_limits = localInputs.model_limits.join(',');
         localInputs.model_limits_enabled = localInputs.model_limits.length > 0;
-        let res = await API.post(`/api/token/`, localInputs);
-        const { success, message } = res.data;
+        let res;
+        try { res = await API.post(`/api/token/`, localInputs); }
+        catch { showError(t('部分令牌创建可能未完成，请核对已创建的令牌。')); break; }
+        const { success, message, data } = res.data;
         if (success) {
           successCount++;
+          if (Number.isSafeInteger(data?.id) && data.id > 0) {
+            createdTokens.push({ id: data.id, name: data.name, status: data.status });
+          }
         } else {
           showError(t(message));
           break;
@@ -295,6 +308,7 @@ const EditTokenModal = (props) => {
         showSuccess(t('令牌创建成功，请在列表页面点击复制获取令牌！'));
         props.refresh();
         props.handleClose();
+        if (createdTokens.length && visibleRef.current && activityRef.current === submitEpoch) props.onCreated?.(createdTokens);
       }
     }
     setLoading(false);
