@@ -25,9 +25,11 @@ await build({
   outdir, bundle: true, splitting: true, format: 'esm', platform: 'browser', target: 'es2020',
   minify: true, metafile: true, chunkNames: 'codex-setup-[hash]',
   define: { 'process.env.NODE_ENV': '"production"' },
-  // Production already has the complete Semi CSS. Do not replace global styles.
+  // Production has Semi CSS already. Emit only the wizard's scoped stylesheet;
+  // the release HTML explicitly links the generated entry CSS before opening it.
   loader: { '.css': 'empty', '.scss': 'empty' },
   plugins: [{ name: 'reuse-production-runtime', setup(api) {
+    api.onLoad({ filter: /CodexSetupModal\.css$/ }, (args) => ({ contents: readFileSync(args.path, 'utf8'), loader: 'css', resolveDir: path.dirname(args.path) }));
     api.onResolve({ filter: /^\/assets\// }, (args) => ({ path: args.path, external: true }));
     api.onResolve({ filter: /^(react|react-dom|react-i18next|@newapi\/production-api)(\/.*)?$/ }, (args) => {
       if (shims[args.path]) return { path: args.path, namespace: 'production-shim' };

@@ -427,7 +427,7 @@ await build({
   outdir: 'unused-verification-output',
   packages: 'external',
   plugins: [rawPlugin],
-  loader: { '.svg': 'dataurl', '.png': 'dataurl' },
+  loader: { '.svg': 'dataurl', '.png': 'dataurl', '.css': 'css' },
   logLevel: 'silent',
 });
 count += 1;

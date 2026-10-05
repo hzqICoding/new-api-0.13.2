@@ -4,6 +4,7 @@
 
 | 日期 | 版本 | 变更说明 |
 |---|---|---|
+| 2026-10-05 | r15.12 · 已发布 | 参照拼车项目重做青绿两步向导、四系统卡、配置摘要和独立下载区。CSS已单独内嵌发布，公网8项新旧资源哈希通过；后端业务源码保持，视觉验收待用户刷新确认。 |
 | 2026-10-05 | r15.11 · 已发布 | 用户反馈#490快速配置只显示泛化错误。已核实旧日卡分组授权随订阅到期失效，保持真实权限拦截；前端显示具体原因及处理方法。新旧公网资源及服务检查通过，实际页面待用户确认。 |
 | 2026-10-05 | r15.10 · 已发布 | classic 密钥页接入已有令牌/创建成功后的 Codex 快速配置，四系统ZIP与本机检查；补令牌专属只读元数据和创建ID。保留原生产定制，未改计费/额度/数据库结构。真实浏览器及用户电脑验收待反馈。 |
 
@@ -138,3 +139,26 @@ ssh -o BatchMode=yes -J serverA serverB "python3 /opt/carpool/releases/newapi-co
 ```
 
 用户验收：Ctrl+F5刷新密钥页，#490应显示明确的分组权限提示；选择当前有权使用的令牌，或自行编辑#490为可用分组后再打开，确认可以进入系统/模型选择与下载。实际浏览器、用户电脑和付费CLI调用仍由用户验收；本轮未执行真实模型调用，也未更改用户业务数据。
+
+## 快速配置界面优化（r15.12）
+
+用户反馈#706向导视觉效果与已认可的拼车端存在明显差距。参照拼车端实际`frontend/src/components/console/CodexSetupModal.tsx`和原H5设计，采用两步向导：第一步选择系统/模型并查看接入地址、配置目录及可选CLI测试；第二步展示配置包、目标系统执行方法、下载与手动配置。顶栏图标及Key ID摘要、横向步骤、Windows/macOS/Linux/WSL四系统卡和统一底部操作使用青绿与轻边框样式。第三阶段明确为用户电脑上的检查，网页不显示伪造的本机检测通过状态。
+
+保留现有令牌归属、到期清理、关闭/改选/换用户失效、即时重新验证和读取Key、最终下载前身份检查及r15.11具体错误提示；不改变后端、模型、脚本模板、计费或生产业务数据。Semi Modal继续承接焦点和Esc关闭；新增CSS严格作用于`.newapi-codex-setup`，避免影响其他模态框和站点主题。
+
+生产构建不能仅用旧addon的空CSS loader，否则会再次丢失定制样式。`build-addon.mjs`仅对向导CSS显式产出`codex-setup-entry.css`，其他Semi样式继续复用生产资产；`prepare_ui.py`在`codex-ui-20261005`命名空间放入新资源并显式写入首页stylesheet链接。`deploy_ui.py`在原启动/资源验证基础上额外校验CSS链接与字节哈希。
+
+发布基线：r15.11镜像`57967c25…9815`、589项后端源码、714项内嵌前端资源。本轮后端589项源码原哈希全部保持（仅内嵌资源与版本重新编译），之前713项非首页资源保持原哈希；原命名空间与Luna价格定制继续保留。新增后资源共835项，构建目录`E:/tmp/newapi-codex-ui-20261005`。
+
+已发布`v0.13.2-carpool-r15.12-codex-ui-20261005`，镜像`hzqicoding/new-api:carpool-r15.12-codex-ui-20261005`，ID `sha256:60de5cd305bb1114f5128059701693a629442401b7d915869d1f3837a3deb71a`；程序SHA-256 `99caefed7e28da2a44d72c789fb3f81eccd69b68388171601d4cde875f46f1a1`。独立CSS SHA-256 `87722f73e5e323985c0fc6521e33b3aad60ef003f7fd6d1e86183779eb6954ec`。
+
+验证：最终15组JS/四系统ZIP/身份失效回归、14个Bash URL谓词、classic完整Vite构建通过；保留原Browserslist/Lottie eval/大包警告，未升级依赖。生产JS静态链接9模块、原行按钮/精确创建ID/失效事件/Luna保留检查通过。CSS解析检查180个选择器均有独立作用域。服务器835项内嵌资源全匹配，临时启动/创建精确脱敏ID/元数据鉴权与7项静态资源（含CSS链接）通过，临时容器及卷已清理；切换后版本/程序哈希/拼车日志API/health通过，options摘要和其他容器ID/启动时间不变。公网8项新旧资源哈希匹配，首页已引用新CSS，旧r15.11 addon URL仍可用。
+
+生产目录`serverB:/opt/carpool/releases/newapi-codex-ui-20261005/`保存程序、835项前端归档、589项Go源码归档、UI源码/构建发布脚本、清单与验证回执。回滚容器`new-api-rollback-newapi-codex-ui-20261005`（r15.11）停止保留。确认没有后续发布后可执行：
+
+```powershell
+ssh -o BatchMode=yes -J serverA serverB "python3 /opt/carpool/releases/newapi-codex-ui-20261005/deploy_ui.py verify"
+ssh -o BatchMode=yes -J serverA serverB "python3 /opt/carpool/releases/newapi-codex-ui-20261005/deploy_ui.py rollback"
+```
+
+用户Ctrl+F5刷新后验收：系统卡选择、模型与地址复制、下一步/上一步、下载ZIP及手动文件、关闭/换Key/超时提示，以及窄屏和暗色显示。实际浏览器视觉及交互仍由用户验收；没有自动浏览器测试、真实模型调用或用户电脑配置操作。主代理最终补回原URL的copyable操作，下载模板和脚本文件未变化。
