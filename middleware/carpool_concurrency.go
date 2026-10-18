@@ -136,6 +136,7 @@ type carpoolWaiter struct {
 	ctx      context.Context
 	path     string
 	deadline time.Time
+	wait     time.Duration // Policy wait captured at enqueue, unchanged by refreshes.
 	notify   chan struct{}
 	state    carpoolWaiterState
 	lease    carpoolLeaseRef
@@ -356,7 +357,7 @@ func (l *carpoolLimiter) acquire(ctx context.Context, id int, path string) (a ca
 			a.rejected = true
 			*logs = append(*logs, fmt.Sprintf("[carpool-concurrency] reject user=%d inflight=%d limit=%d reason=queue_full", id, user.inflight, limit))
 		} else {
-			a.waiter = &carpoolWaiter{user: user, ctx: ctx, path: path, deadline: now.Add(p.wait), notify: make(chan struct{}), limit: limit}
+			a.waiter = &carpoolWaiter{user: user, ctx: ctx, path: path, deadline: now.Add(p.wait), wait: p.wait, notify: make(chan struct{}), limit: limit}
 			user.waiters = append(user.waiters, a.waiter)
 			l.applyUserLocked(user, p, now, logs)
 		}
@@ -422,7 +423,11 @@ func (l *carpoolLimiter) middleware() gin.HandlerFunc {
 			return
 		}
 		if a.rejected {
-			abortWithOpenAiMessage(c, http.StatusTooManyRequests, fmt.Sprintf("当前套餐最多同时进行 %d 个请求，请稍后重试", a.limit), types.ErrorCode("carpool_concurrency_limit"))
+			message := fmt.Sprintf("当前座位最大并发为 %d，排队已满，请稍后重试", a.limit)
+			if a.waiter != nil {
+				message = fmt.Sprintf("当前座位最大并发为 %d，已等待 %d 秒仍无空位，请稍后重试", a.limit, int(a.waiter.wait/time.Second))
+			}
+			abortWithOpenAiMessage(c, http.StatusTooManyRequests, message, types.ErrorCode("carpool_concurrency_limit"))
 			return
 		}
 		if a.lease.id != 0 {

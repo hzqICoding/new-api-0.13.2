@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -21,7 +22,10 @@ import (
 func carpoolTestRouter(handler gin.HandlerFunc, downstream gin.HandlerFunc) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	r.Use(func(c *gin.Context) { c.Set("id", 741) })
+	r.Use(func(c *gin.Context) {
+		c.Set("id", 741)
+		c.Set(common.RequestIdKey, "carpool-test-request")
+	})
 	r.Use(handler)
 	r.POST("/relay", downstream)
 	return r
@@ -48,7 +52,7 @@ func carpoolResponse(t *testing.T, done <-chan *httptest.ResponseRecorder) *http
 	}
 }
 
-func carpoolAssert429(t *testing.T, w *httptest.ResponseRecorder, limit int) {
+func carpoolAssert429(t *testing.T, w *httptest.ResponseRecorder, wantMessage string) {
 	t.Helper()
 	var body struct {
 		Error struct {
@@ -60,11 +64,8 @@ func carpoolAssert429(t *testing.T, w *httptest.ResponseRecorder, limit int) {
 	if err := common.Unmarshal(w.Body.Bytes(), &body); err != nil {
 		t.Fatal(err)
 	}
-	if w.Code != http.StatusTooManyRequests || body.Error.Code != "carpool_concurrency_limit" || body.Error.Type != "new_api_error" || !strings.Contains(body.Error.Message, "当前套餐最多同时进行") {
+	if w.Code != http.StatusTooManyRequests || body.Error.Code != "carpool_concurrency_limit" || body.Error.Type != "new_api_error" || body.Error.Message != wantMessage+" (request id: carpool-test-request)" {
 		t.Fatalf("unexpected rejection: %d %s", w.Code, w.Body.String())
-	}
-	if limit == 1 && !strings.Contains(body.Error.Message, "1 个请求") {
-		t.Fatal("rejection did not include the user's limit")
 	}
 }
 
@@ -120,7 +121,7 @@ func TestCarpoolMiddlewareObserve(t *testing.T) {
 
 func TestCarpoolMiddlewareQueueAndReject(t *testing.T) {
 	h := newCarpoolTestRig(t)
-	h.set(t, "enforce", 1, 10)
+	h.set(t, "enforce", 1, 3)
 	entered, release := make(chan struct{}, 2), make(chan struct{})
 	var releaseOnce sync.Once
 	unblock := func() { releaseOnce.Do(func() { close(release) }) }
@@ -141,7 +142,7 @@ func TestCarpoolMiddlewareQueueAndReject(t *testing.T) {
 	second := carpoolStartRequest(r, context.Background())
 	carpoolEventually(t, func() bool { _, q, _ := h.counts(); return q == 1 })
 	third := carpoolStartRequest(r, context.Background())
-	carpoolAssert429(t, carpoolResponse(t, third), 1)
+	carpoolAssert429(t, carpoolResponse(t, third), "当前座位最大并发为 1，排队已满，请稍后重试")
 	if calls.Load() != 1 || h.logCount("reason=queue_full") != 1 {
 		t.Fatal("queued or rejected request consumed downstream work")
 	}
@@ -153,7 +154,7 @@ func TestCarpoolMiddlewareQueueAndReject(t *testing.T) {
 }
 
 func TestCarpoolMiddlewareTimeout(t *testing.T) {
-	for _, wait := range []int{0, 10} {
+	for _, wait := range []int{0, 3, 10} {
 		t.Run(time.Duration(wait).String(), func(t *testing.T) {
 			h := newCarpoolTestRig(t)
 			h.set(t, "enforce", 1, wait)
@@ -164,15 +165,39 @@ func TestCarpoolMiddlewareTimeout(t *testing.T) {
 			done := carpoolStartRequest(r, context.Background())
 			if wait > 0 {
 				carpoolEventually(t, func() bool { _, q, _ := h.counts(); return q == 1 })
-				h.advance(10 * time.Second)
+				h.advance(time.Duration(wait) * time.Second)
 			}
-			carpoolAssert429(t, carpoolResponse(t, done), 1)
+			carpoolAssert429(t, carpoolResponse(t, done), fmt.Sprintf("当前座位最大并发为 1，已等待 %d 秒仍无空位，请稍后重试", wait))
 			if called.Load() || h.logCount("reason=timeout") != 1 {
 				t.Fatal("timeout did not abort downstream exactly once")
 			}
 			h.assertCounts(t, 1, 0, 1)
 		})
 	}
+}
+
+func TestCarpoolMiddlewareTimeoutUsesEnqueuedWaitAndDecisionLimit(t *testing.T) {
+	h := newCarpoolTestRig(t)
+	h.set(t, "enforce", 3, 3)
+	for i := 0; i < 3; i++ {
+		holder := h.l.acquire(context.Background(), 741, "/hold")
+		defer h.l.release(holder.lease)
+	}
+	var called atomic.Bool
+	r := carpoolTestRouter(h.l.middleware(), func(c *gin.Context) { called.Store(true) })
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := carpoolStartRequest(r, ctx)
+	carpoolEventually(t, func() bool { _, q, _ := h.counts(); return q == 1 })
+	// The limit follows the decision's policy, but wait stays at the enqueue
+	// policy's 3 seconds even when the new wait or elapsed time differs.
+	h.set(t, "enforce", 2, 60)
+	h.advance(5 * time.Second)
+	carpoolAssert429(t, carpoolResponse(t, done), "当前座位最大并发为 2，已等待 3 秒仍无空位，请稍后重试")
+	if called.Load() || h.logCount("reject user=741 inflight=3 limit=2 reason=timeout") != 1 {
+		t.Fatal("timeout did not preserve the decision limit or abort downstream exactly once")
+	}
+	h.assertCounts(t, 3, 0, 1)
 }
 
 func TestCarpoolMiddlewareCancelAborts(t *testing.T) {
@@ -325,7 +350,7 @@ func TestCarpoolRepeatedRefreshDoesNotExtendDeadline(t *testing.T) {
 		h.advance(time.Second)
 		h.l.RefreshAndApply(nil)
 	}
-	carpoolAssert429(t, carpoolResponse(t, done), 1)
+	carpoolAssert429(t, carpoolResponse(t, done), "当前座位最大并发为 1，已等待 10 秒仍无空位，请稍后重试")
 }
 
 func TestCarpoolFixedEnforceStress(t *testing.T) {
@@ -406,7 +431,10 @@ func TestCarpoolMountsShareUserCounter(t *testing.T) {
 	})
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	r.Use(func(c *gin.Context) { c.Set("id", 741) })
+	r.Use(func(c *gin.Context) {
+		c.Set("id", 741)
+		c.Set(common.RequestIdKey, "carpool-test-request")
+	})
 	var nestedStatus int
 	r.Group("/v1", CarpoolConcurrencyLimit()).POST("/relay", func(c *gin.Context) {
 		w := httptest.NewRecorder()
@@ -414,7 +442,7 @@ func TestCarpoolMountsShareUserCounter(t *testing.T) {
 		req.Header.Set("Authorization", "Bearer different-key-same-user")
 		r.ServeHTTP(w, req)
 		nestedStatus = w.Code
-		carpoolAssert429(t, w, 1)
+		carpoolAssert429(t, w, "当前座位最大并发为 1，已等待 0 秒仍无空位，请稍后重试")
 		c.Status(http.StatusNoContent)
 	})
 	r.Group("/v1beta", CarpoolConcurrencyLimit()).POST("/relay", func(c *gin.Context) { c.Status(http.StatusNoContent) })
