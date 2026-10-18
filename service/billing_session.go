@@ -339,7 +339,13 @@ func (s *BillingSession) syncRelayInfo() {
 // ---------------------------------------------------------------------------
 
 // NewBillingSession 根据用户计费偏好创建 BillingSession，处理 subscription_first / wallet_first 的回退。
-func NewBillingSession(c *gin.Context, relayInfo *relaycommon.RelayInfo, preConsumedQuota int) (*BillingSession, *types.NewAPIError) {
+func NewBillingSession(c *gin.Context, relayInfo *relaycommon.RelayInfo, preConsumedQuota int) (_ *BillingSession, finalErr *types.NewAPIError) {
+	// Mark only the final failure; wallet/subscription fallback may recover.
+	defer func() {
+		if finalErr != nil && (finalErr.GetErrorCode() == types.ErrorCodeInsufficientUserQuota || finalErr.GetErrorCode() == types.ErrorCodePreConsumeTokenQuotaFailed) {
+			c.Set("relay_failure_reason", "quota_insufficient")
+		}
+	}()
 	if relayInfo == nil {
 		return nil, types.NewError(fmt.Errorf("relayInfo is nil"), types.ErrorCodeInvalidRequest, types.ErrOptionWithSkipRetry())
 	}

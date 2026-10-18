@@ -423,8 +423,10 @@ func (l *carpoolLimiter) middleware() gin.HandlerFunc {
 			return
 		}
 		if a.rejected {
+			c.Set(relayFailureReasonKey, "concurrency_queue_full")
 			message := fmt.Sprintf("当前座位最大并发为 %d，排队已满，请稍后重试", a.limit)
 			if a.waiter != nil {
+				c.Set(relayFailureReasonKey, "concurrency_timeout")
 				message = fmt.Sprintf("当前座位最大并发为 %d，已等待 %d 秒仍无空位，请稍后重试", a.limit, int(a.waiter.wait/time.Second))
 			}
 			abortWithOpenAiMessage(c, http.StatusTooManyRequests, message, types.ErrorCode("carpool_concurrency_limit"))

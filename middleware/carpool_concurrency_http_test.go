@@ -497,7 +497,7 @@ func TestCarpoolRelayRouterOrder(t *testing.T) {
 		for i, name := range names {
 			if name == "CarpoolConcurrencyLimit" {
 				count++
-				if (group != "relayV1Router" && group != "relayGeminiRouter") || i == 0 || i+1 >= len(names) || names[i-1] != "TokenAuth" || names[i+1] != "ModelRequestRateLimit" {
+				if (group != "relayV1Router" && group != "relayGeminiRouter") || i < 2 || i+1 >= len(names) || names[i-2] != "TokenAuth" || names[i-1] != "RelayFailureLog" || names[i+1] != "ModelRequestRateLimit" {
 					t.Fatalf("wrong route or middleware order: %s %v", group, names)
 				}
 			}
