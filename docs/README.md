@@ -1,10 +1,10 @@
 # 本地定制与生产维护索引
 
-本页是此安装实例的维护入口，最后核实于 **2026-10-19 12:02 UTC**（r15.17默认关闭发布后）。各专题保留发布当时的事实，旧文中的“当前”“线上”和旧回滚命令不代表现在可以直接执行。原项目 new-api / QuantumNous 的文档与标识保持。
+本页是此安装实例的维护入口，最后核实于 **2026-10-19 12:35 UTC**（r15.17配置灰度A2后）。各专题保留发布当时的事实，旧文中的“当前”“线上”和旧回滚命令不代表现在可以直接执行。原项目 new-api / QuantumNous 的文档与标识保持。
 
 ## 当前状态
 
-**2026-10-19 已发布、保持关闭**：[受控用量聚合接口](usage-aggregate-20261019/README.md)已完成本地/只读HTTP验证及r15.17发布；聚合开关仍absent（等同false），没有启用shadow/灰度。拼车后端usage-aggregate-off-20261019-1 healthy、前端share-20261019-03保持。
+**2026-10-19 A2灰度运行中**：r15.17程序/镜像未变，当前`CARPOOL_USAGE_AGGREGATE_ENABLED=true`；拼车只对Pro20x-260910A2（pool3）周期336/337选用新统计，其他主号旧路径。定向原生reader对照1216条全相等；实际后台刷新528/444ms，用户反馈明显更快、A2提速验收通过；详情见[专题末节](usage-aggregate-20261019/README.md)。当前已不是全局关闭状态。
 
 | 项目 | 已核实值 |
 |---|---|
@@ -14,7 +14,7 @@
 | 当前发布目录 | `serverB:/opt/carpool/releases/newapi-usage-aggregate-20261019/` |
 | 当前classic资源目录 | `/assets/codex-routes-20261005/`（r15.17 / r15.16 / r15.15 / r15.14 内嵌前端与 r15.13 逐项一致） |
 | 配置入口 | CF默认 `https://api.1aicode.space/v1`；直连可选 `https://api.dm.1aicode.space/v1` |
-| 相邻回滚版本 | r15.16；容器`new-api-rollback-newapi-usage-aggregate-20261019`停止保留 |
+| 相邻回滚版本 | 当前先回退A2运行配置到r15.17关闭态：`new-api-rollback-usage-aggregate-a2-20261019`；再考虑r15.16版本回滚。先按拼车部署记录§5执行双服务灰度rollback，勿跳过所有权检查。 |
 
 r15.14 于 2026-10-17 09:26（北京时间）切换，`cutover` / `verify` 通过（版本、程序哈希、令牌日志接口、拼车健康、前端资源、Luna 价格、其他 19 个容器未变、options 未变）。上线时策略键不存在，等同不限制；限制模式由拼车后台控制。
 

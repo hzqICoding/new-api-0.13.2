@@ -1,6 +1,6 @@
 # 受控用量聚合接口（2026-10-19）
 
-状态：**已提交并发布r15.17，默认关闭，尚未启用shadow/灰度。** 实现提交f8a02685；部署证据与回滚见文末“默认关闭发布”。
+状态：**r15.17已发布；2026-10-19 20:34按用户指定启用A2灰度。** 程序不变，new-api聚合入口true，拼车消费端仅周期336/337使用新统计。实现提交f8a02685；历史默认关闭发布与最新灰度/回滚见文末。
 
 工作分支：`feat/usage-aggregate-20261019`，起点为既有 `feat/carpool-failure-log`。本专题只新增读取接口与测试；不修改旧日志接口、收费/配额、业务日志写入、表结构或索引。主代理另负责客户端接入与受限生产只读对照；其结果不能由本回执替代。
 
@@ -139,3 +139,23 @@ python3 /opt/carpool/releases/newapi-usage-aggregate-20261019/deploy.py rollback
 ```
 
 恢复r15.16容器/配置/网络，不恢复或回写数据库。本轮没有执行生产回滚演练。拼车发布与回滚另见其10月19日部署记录§4；本地源码已提交，未推送/合并main。
+
+## 2026-10-19 Pro20x-260910A2灰度（当前运行配置）
+
+用户指定A2，pool3在用座位10/11的7天周期336/337。程序/镜像/前端不变；同镜像重建后，new-api新增CARPOOL_USAGE_AGGREGATE_ENABLED=true，拼车新增NEWAPI_DISPLAY_USAGE_MODE=aggregate、NEWAPI_DISPLAY_USAGE_BUCKETS=336,337。该allowlist在消费端控制，不是把new-api管理员接口做成只允许pool3；普通用户无此管理员权限，其他主号的拼车统计仍用旧路径。
+
+先保持拼车off，做真实Go客户端新→旧→新对照：日志上界586159，1216条，五字段逐bucket和总计完全相等，旧14次HTTP约7.919秒，新两次各1个POST分别1.437/0.312秒且无fallback。对照回执15分钟有效，scope和Key集合保持后才开启拼车灰度。未配置全局shadow（此样本超过其500条上限），没有把采样跳过当作验证通过。
+
+new-api新容器启动12:31:59Z，拼车12:33:57Z，均RestartCount0；拼车healthy。20:35观察尚未出现实际页面触发的新聚合日志，已通知用户刷新A2详情做页面体验验收，不能据配置验证宣称浏览器已验收。
+
+运行Env只修改上述3项，没有修改compose/env文件。Docker restart保持；以后按其他配置重新创建容器须核对是否保留灰度。周期换新后allowlist不匹配会走旧路径，不永久跟随主号。
+
+恢复材料serverB:/opt/carpool/releases/usage-aggregate-a2-20261019/；关闭态旧容器new-api-rollback-usage-aggregate-a2-20261019停止保留。回退必须先在serverB执行：
+
+```bash
+python3 /opt/carpool/releases/usage-aggregate-a2-20261019/rollout.py rollback
+```
+
+该操作先恢复拼车off，再恢复new-api关闭，程序仍r15.17。若还需回到r15.16，完成灰度回退后再用上节版本回滚；直接跳过灰度使用旧版本回滚脚本会触发容器所有权守卫。所有切换无人工业务数据写入，无数据库恢复。详细范围、首次未启动候选的OomKillDisable null/false守卫修正及证据见拼车10月19日部署记录§5。
+
+A2灰度用户验收补记：20:41观察实际展示路径aggregate_ok两次（3个Token，528/444ms），无回退，CP ERROR级事件0；已完成的/v1/日志抽取72个200、1个401，未观察到5xx，不将其作为全量成功率/高峰证明。用户随后反馈“明显更快”，A2主号详情提速验收通过。仍只保留周期336/337灰度，未扩展其他主号或窗口。
