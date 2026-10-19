@@ -12,3 +12,7 @@
 | 2026-09-25 | /root/frontend_dependency_audit | gpt-5.6-sol / high（调用参数） | 前端分包依赖审计与修复方案独立复核；仅写docs/frontend-module-fix-20260925/audit-* | 已完成，可复用 | Thread 01a0d771-0936-71b2-b7cb-15a42f8cc8c1；Session 01a0c49e-8bd9-7510-ad13-7a8e0763e458（继承关系未验证）；回执 audit-report.md；跨客户端恢复未验证 |
 | 2026-09-23 | /root | 当前会话（未单独读取元数据） | Luna后端倍率豁免、测试、配置与发布整合 | 已发布并验收 | 父会话；回执docs/luna-pricing-20260923/README.md；未记录独立UUID |
 | 2026-09-23 | /root/luna_pricing_ui | 元数据未向本线程暴露 | 前端价格展示及保持生产资源的最小补丁 | 已发布并验收，可复用 | Thread `01a0cc83-5d5a-7bc3-be0e-88c80dff8fbd`；Session `01a0c79b-ddb9-74f3-bf1d-d3b590062af4`（继承关系未验证）；回执 `docs/luna-pricing-20260923/frontend-production-patch.md`；本线程可 follow-up，跨客户端恢复未验证 |
+
+## 2026-10-19 受控聚合候选（未发布）
+
+复用 `/root/fast_list_backend`，gpt-6-astra/xhigh，实现model/controller/router聚合接口及测试，并只读审核拼车client接线及指定周期allowlist；独立UUID未提供。本线程followup复用已验证，最多主+1。主代理负责拼车接线/测试和临时只读HTTP实库比较，代理无生产操作。状态：交付及互审完成可复用；回执docs/usage-aggregate-20261019/README.md，拼车docs/81；未提交/推送/发布，默认关闭。不得把历史readonly80或本轮候选HTTP当成生产已切换。
