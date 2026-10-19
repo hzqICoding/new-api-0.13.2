@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "version": "v0.13.2-carpool-r15.17-usage-aggregate-20261019",
+  "image": "sha256:82ffa348e9abe6f352253a56eed6737afb2e480a5e83ae78b9580526ca0af28b",
+  "binary_sha256": "756970f5ee85edef29eaada69bad653303e1443cb1029b5d0e4b3d2277764e3d",
+  "aggregate_enabled": false,
+  "authorized_post_status": 503,
+  "anonymous_post_status": 401,
+  "old_log_token_filter": true,
+  "static_probes": 8,
+  "options_unchanged_except_concurrency_policy": true,
+  "schema_unchanged": true,
+  "other_containers_unchanged": true,
+  "stage_executed": false,
+  "browser_test": false
+}

@@ -1,20 +1,20 @@
 # 本地定制与生产维护索引
 
-本页是此安装实例的维护入口，最后核实于 **2026-10-18 16:08 UTC**（r15.16 切换后）。各专题保留发布当时的事实，旧文中的“当前”“线上”和旧回滚命令不代表现在可以直接执行。原项目 new-api / QuantumNous 的文档与标识保持。
+本页是此安装实例的维护入口，最后核实于 **2026-10-19 12:02 UTC**（r15.17默认关闭发布后）。各专题保留发布当时的事实，旧文中的“当前”“线上”和旧回滚命令不代表现在可以直接执行。原项目 new-api / QuantumNous 的文档与标识保持。
 
 ## 当前状态
 
-**2026-10-19 未发布候选**：[受控用量聚合接口](usage-aggregate-20261019/README.md)已完成本地测试及主代理真实数据库只读HTTP对照；默认关闭，没有替换下表现网版本。拼车仅展示统计可选择off/shadow/指定周期灰度，金额/Key/收费写链不改。源代码分支 `feat/usage-aggregate-20261019`。
+**2026-10-19 已发布、保持关闭**：[受控用量聚合接口](usage-aggregate-20261019/README.md)已完成本地/只读HTTP验证及r15.17发布；聚合开关仍absent（等同false），没有启用shadow/灰度。拼车后端usage-aggregate-off-20261019-1 healthy、前端share-20261019-03保持。
 
 | 项目 | 已核实值 |
 |---|---|
-| 运行版本 | `v0.13.2-carpool-r15.16-failure-log-20261018` |
-| 镜像ID | `sha256:45a4d257a4f048bdca4c60b12e77881f2814425b9f0222ef5d8409ff1174fb18` |
-| 程序SHA-256 | `c987f75bb5db4a72119951da575351c34d7b2c17f7f5369ccdcc5c7d6064afd6` |
-| 当前发布目录 | `serverB:/opt/carpool/releases/newapi-failure-log-20261018/` |
-| 当前classic资源目录 | `/assets/codex-routes-20261005/`（r15.16 / r15.15 / r15.14 内嵌前端与 r15.13 逐项一致） |
+| 运行版本 | `v0.13.2-carpool-r15.17-usage-aggregate-20261019` |
+| 镜像ID | `sha256:82ffa348e9abe6f352253a56eed6737afb2e480a5e83ae78b9580526ca0af28b` |
+| 程序SHA-256 | `756970f5ee85edef29eaada69bad653303e1443cb1029b5d0e4b3d2277764e3d` |
+| 当前发布目录 | `serverB:/opt/carpool/releases/newapi-usage-aggregate-20261019/` |
+| 当前classic资源目录 | `/assets/codex-routes-20261005/`（r15.17 / r15.16 / r15.15 / r15.14 内嵌前端与 r15.13 逐项一致） |
 | 配置入口 | CF默认 `https://api.1aicode.space/v1`；直连可选 `https://api.dm.1aicode.space/v1` |
-| 相邻回滚版本 | r15.15；容器`new-api-rollback-newapi-failure-log-20261018`，发布时停止保留（更早的 r15.14、r15.13 回滚容器仍保留） |
+| 相邻回滚版本 | r15.16；容器`new-api-rollback-newapi-usage-aggregate-20261019`停止保留 |
 
 r15.14 于 2026-10-17 09:26（北京时间）切换，`cutover` / `verify` 通过（版本、程序哈希、令牌日志接口、拼车健康、前端资源、Luna 价格、其他 19 个容器未变、options 未变）。上线时策略键不存在，等同不限制；限制模式由拼车后台控制。
 
@@ -33,6 +33,7 @@ r15.14 于 2026-10-17 09:26（北京时间）切换，`cutover` / `verify` 通�
 | r15.14 · 10-17 | 拼车座位并发限制中间件（新增 1 文件 + 路由 2 行；策略键 `CarpoolConcurrencyPolicy`）；分支 `feat/carpool-concurrency-limit` | [并发限制](carpool-concurrency-20261016/README.md) |
 | r15.15 · 10-18 | 并发超限 429 提示按「排队等满 / 排队已满」区分，显示座位上限与等待秒数；分支 `feat/carpool-concurrency-message` | [超限提示](carpool-concurrency-message-20261018/README.md) |
 | r15.16 · 10-19 | 中继失败请求按原因写入类型 5 日志（每用户每分钟 30 条），每分钟限流 429 补提示；分支 `feat/carpool-failure-log` | [失败记录](carpool-failure-log-20261018/README.md) |
+| r15.17 · 10-19 | 受控聚合接口已发布但默认关闭，原接口/前端/表结构/配置保持 | [用量聚合与发布记录](usage-aggregate-20261019/README.md) |
 
 [会话登记](codex-sessions.md)用于职责接续，不替代源码、制品和发布记录。拼车项目交接入口为[会话交接与启动指南](../../carpool-platform/docs/00-会话交接与启动指南.md)。
 

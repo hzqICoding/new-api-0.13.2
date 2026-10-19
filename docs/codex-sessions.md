@@ -16,3 +16,5 @@
 ## 2026-10-19 受控聚合候选（未发布）
 
 复用 `/root/fast_list_backend`，gpt-6-astra/xhigh，实现model/controller/router聚合接口及测试，并只读审核拼车client接线及指定周期allowlist；独立UUID未提供。本线程followup复用已验证，最多主+1。主代理负责拼车接线/测试和临时只读HTTP实库比较，代理无生产操作。状态：交付及互审完成可复用；回执docs/usage-aggregate-20261019/README.md，拼车docs/81；未提交/推送/发布，默认关闭。不得把历史readonly80或本轮候选HTTP当成生产已切换。
+
+2026-10-19部署收口：主代理在用户授权后完成r15.17默认关闭发布；/root/fast_list_backend仅交付发布脚本和deployment-preparation.md，无SSH操作。候选和关闭态生产检查通过，旧容器保留；详情usage-aggregate-20261019/README.md末节。状态已发布未启用shadow/灰度，源码f8a02685，未推送或合并main。

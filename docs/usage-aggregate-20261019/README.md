@@ -1,6 +1,6 @@
 # 受控用量聚合接口（2026-10-19）
 
-状态：**实现与本地测试完成，未提交、未部署、默认关闭。**
+状态：**已提交并发布r15.17，默认关闭，尚未启用shadow/灰度。** 实现提交f8a02685；部署证据与回滚见文末“默认关闭发布”。
 
 工作分支：`feat/usage-aggregate-20261019`，起点为既有 `feat/carpool-failure-log`。本专题只新增读取接口与测试；不修改旧日志接口、收费/配额、业务日志写入、表结构或索引。主代理另负责客户端接入与受限生产只读对照；其结果不能由本回执替代。
 
@@ -121,3 +121,21 @@ func model.ReadUsageAggregate(
 同一冻结上界584140，四组每组3次，金额/请求/输入/输出/缓存Token逐bucket与旧侧证据全相等：单座位8182条0.412–0.482秒，4座位13090条1.829–2.245秒，历史重置1811条0.044–0.062秒，显式0上界1.1–1.5ms。匿名401、关闭503通过。该结果是候选handler+鉴权+实库+响应耗时，不是公网/整页面/P95，也不是已经发布。
 
 完整证据在拼车 `verification/usage-aggregate-20261019/http-results.json`；方案与灰度范围见拼车docs/81。程序SHA256 `1e8f8ca0c07e0de984b91b6b880d67670f8f1b6d3dac1143994b85ebc8b37f34`。主代理补做new-api应用入口Go build通过，未生成或替换生产发布包。原有前端、价格、渠道配置不变。
+
+## 2026-10-19 默认关闭发布（已完成）
+
+用户授权先发布默认关闭版本，当前r15.17已上线。源码f8a02685，镜像`sha256:82ffa348e9abe6f352253a56eed6737afb2e480a5e83ae78b9580526ca0af28b`，程序`756970f5ee85edef29eaada69bad653303e1443cb1029b5d0e4b3d2277764e3d`。`CARPOOL_USAGE_AGGREGATE_ENABLED`仍未配置，等同false；带管理员身份新API返回503 usage_aggregate_disabled、匿名401。拼车模式也保持off，未启用shadow或周期灰度。
+
+596个旧源码基线与生产构建树一致，增量后601项源码；114个依赖不变；内嵌956资产与r15.16逐项匹配。使用新脚本preflight/prepare/cutover，未执行隔离业务stage、不伪造stage回执。Env/挂载/网络保持，数据库schema/index摘要一致；options除既有任务动态更新的CarpoolConcurrencyPolicy外逐项摘要一致。旧日志token过滤契约、版本/hash、首页和8个静态探测、拼车health通过，new-api切换阶段其余运行容器未改。之后主代理另发布拼车默认off后端；不得在这之后直接运行依赖“所有其他容器不变”的本轮verify来误判拼车的已授权更新。
+
+2026-10-19T11:57:42Z新容器启动，RestartCount0；未配置Docker Healthcheck，运行与HTTP验证通过，不冒称Docker health为healthy。CF与直连/api/status均200/r15.17；未进行模型付费请求或浏览器验收。无表结构迁移、无人工额度/Key修改；切换进程不等于承诺所有在途请求零中断。
+
+完整归档：serverB `/opt/carpool/releases/newapi-usage-aggregate-20261019/`，含受限配置快照、manifest、schema/options摘要及关闭检查；安全回执 [verification/r15.17-deployed-off.json](verification/r15.17-deployed-off.json)。旧容器`new-api-rollback-newapi-usage-aggregate-20261019`已确认停止保留。
+
+回滚（先核对无后续发布）在serverB执行：
+
+```bash
+python3 /opt/carpool/releases/newapi-usage-aggregate-20261019/deploy.py rollback
+```
+
+恢复r15.16容器/配置/网络，不恢复或回写数据库。本轮没有执行生产回滚演练。拼车发布与回滚另见其10月19日部署记录§4；本地源码已提交，未推送/合并main。
