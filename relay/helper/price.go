@@ -3,6 +3,7 @@ package helper
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/logger"
@@ -36,11 +37,38 @@ func modelPriceNotConfiguredError(modelName string, userId int) error {
 const claudeCacheCreation1hMultiplier = 6 / 3.75
 
 // HandleGroupRatio checks for "auto_group" in the context and updates the group ratio and relayInfo.UsingGroup if present
-func HandleGroupRatio(ctx *gin.Context, relayInfo *relaycommon.RelayInfo) types.GroupRatioInfo {
-	groupRatioInfo := types.GroupRatioInfo{
+func HandleGroupRatio(ctx *gin.Context, relayInfo *relaycommon.RelayInfo) (groupRatioInfo types.GroupRatioInfo) {
+	groupRatioInfo = types.GroupRatioInfo{
 		GroupRatio:        1.0, // default ratio
 		GroupSpecialRatio: -1,
 	}
+	// Apply after every legacy branch, including the model override early return.
+	defer func() {
+		previous := relayInfo.CarpoolBillingSnapshot
+		if previous != nil && previous.Group == relayInfo.UsingGroup && previous.Model == relayInfo.OriginModelName {
+			groupRatioInfo = types.GroupRatioInfo{GroupRatio: previous.EffectiveGroupRatio, GroupSpecialRatio: previous.GroupSpecialRatio, HasSpecialRatio: previous.HasSpecialRatio, Carpool: previous, CarpoolPricedAt: previous.PricedAt}
+			return
+		}
+		relayInfo.CarpoolBillingSnapshot = nil
+		ratio, matched, inGroup := billing_setting.ResolveCarpoolBilling(relayInfo.UsingGroup, relayInfo.OriginModelName)
+		if inGroup {
+			groupRatioInfo.CarpoolPricedAt = time.Now().Unix()
+		}
+		if matched {
+			snapshot := &types.CarpoolBillingSnapshot{Group: relayInfo.UsingGroup, Model: relayInfo.OriginModelName, Ratio: ratio, PricedAt: groupRatioInfo.CarpoolPricedAt, BaseGroupRatio: groupRatioInfo.GroupRatio, EffectiveGroupRatio: groupRatioInfo.GroupRatio * ratio, GroupSpecialRatio: groupRatioInfo.GroupSpecialRatio, HasSpecialRatio: groupRatioInfo.HasSpecialRatio}
+			groupRatioInfo.GroupRatio = snapshot.EffectiveGroupRatio
+			groupRatioInfo.Carpool = snapshot
+			relayInfo.CarpoolBillingSnapshot = snapshot
+		}
+		// Auto-group retry can change the billed scope. Keep its tiered settlement
+		// and log multiplier together, without changing legacy-only retry behavior.
+		if (previous != nil || groupRatioInfo.Carpool != nil) && relayInfo.TieredBillingSnapshot != nil {
+			snapshot := *relayInfo.TieredBillingSnapshot
+			snapshot.GroupRatio = groupRatioInfo.GroupRatio
+			snapshot.EstimatedQuotaAfterGroup = billingexpr.QuotaRound(snapshot.EstimatedQuotaBeforeGroup * snapshot.GroupRatio)
+			relayInfo.TieredBillingSnapshot = &snapshot
+		}
+	}()
 
 	// check auto group
 	autoGroup, exists := ctx.Get("auto_group")

@@ -18,3 +18,19 @@
 复用 `/root/fast_list_backend`，gpt-6-astra/xhigh，实现model/controller/router聚合接口及测试，并只读审核拼车client接线及指定周期allowlist；独立UUID未提供。本线程followup复用已验证，最多主+1。主代理负责拼车接线/测试和临时只读HTTP实库比较，代理无生产操作。状态：交付及互审完成可复用；回执docs/usage-aggregate-20261019/README.md，拼车docs/81；未提交/推送/发布，默认关闭。不得把历史readonly80或本轮候选HTTP当成生产已切换。
 
 2026-10-19部署收口：主代理在用户授权后完成r15.17默认关闭发布；/root/fast_list_backend仅交付发布脚本和deployment-preparation.md，无SSH操作。候选和关闭态生产检查通过，旧容器保留；详情usage-aggregate-20261019/README.md末节。状态已发布未启用shadow/灰度，源码f8a02685，未推送或合并main。
+
+## 2026-10-20 wp86a 计费契约核对（needs-decision）
+
+工作目录为本仓库，分支 `feat/carpool-billing-20261020`。任务书为拼车项目 `mailbox/to-codex/86a-newapi-carpool-billing.md`。只读核对发现异步任务 token 重算和 Realtime 分段预扣重新读取分组倍率，并不统一使用 `HandleGroupRatio` 的有效倍率；按任务书停工条件等待裁定。没有业务代码、测试或发布脚本交付，没有联网、SSH、部署或提交；仅登记本次协作状态。
+
+| Canonical task | 模型/等级 | 身份 | 职责及回执 | 状态 / 接续 |
+|---|---|---|---|---|
+| `/root` | 当前主会话，工具未提供模型/等级元数据 | `CODEX_THREAD_ID` / `CODEX_SESSION_ID` 均为 `01a1580d-7314-7e11-9c91-653ec361cc20` | 契约、计费调用链及集成；最终回执在会话中，不另写回执文件 | 待裁定上述两条路径的修正口径 |
+| `/root/billing_matrix` | `gpt-6-astra` / `xhigh`（调用参数） | `CODEX_THREAD_ID=01a1580e-a9e7-7753-8647-83c761d4b7a9`；`CODEX_SESSION_ID=01a1580d-7314-7e11-9c91-653ec361cc20`（与父会话相同） | 价格矩阵及 pricing 测试；回执确认未写文件、未运行测试，契约缺少完整 38 模型名单及 compact 改写目标 | 已停工；本次续接的 live agent 列表不含该代理，跨客户端恢复未验证 |
+| `/root/billing_release` | `gpt-6.1-sol` / `high`（调用参数） | 工具仅返回 canonical task，独立 UUID 未提供 | 仅限新发布目录；因停工中断，工作区核对无该代理产物 | 已中断；本次续接的 live agent 列表不含该代理，跨客户端恢复未验证 |
+
+后续先明确是否把上述绕行路径改为使用请求/任务冻结的有效倍率（兼容旧任务及无策略行为），并补齐 38 模型输入；再继续原任务书全部实现与验证。不把源码调用链核对视为价格矩阵或真实扣费测试通过。
+
+## 2026-10-20 实现与发布接续
+
+用户要求完成剩余。主代理核实旧wp86a仅needs-decision未写业务，已明确纳入异步任务和Realtime冻结路径，并只读采集38模型及映射。复用/root/fast_list_backend（沿用既有astra/xhigh，无新增UUID）负责17个Go增量与矩阵，/root/fast_list_review同配置负责发布脚本3文件；不另起子代理。两者已交付，主代理复核真实diff并跑CP实际复算12条全相等。主代理处理CP前端局部警告、R5计价时点、构建发布与台账。未把旧needs-decision记录改写为当时已实现；真实新回执为CP mailbox/from-codex/86a-completion.md。

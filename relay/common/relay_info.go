@@ -153,7 +153,8 @@ type RelayInfo struct {
 	UseRuntimeHeadersOverride             bool
 	ParamOverrideAudit                    []string
 
-	PriceData types.PriceData
+	PriceData              types.PriceData
+	CarpoolBillingSnapshot *types.CarpoolBillingSnapshot
 
 	// TieredBillingSnapshot is a frozen snapshot of tiered billing rules
 	// captured at pre-consume time. Non-nil only when billing mode is "tiered_expr".

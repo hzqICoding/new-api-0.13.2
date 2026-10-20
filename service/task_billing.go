@@ -46,6 +46,7 @@ func LogTaskConsumption(c *gin.Context, info *relaycommon.RelayInfo) {
 	if info.PriceData.GroupRatioInfo.HasSpecialRatio {
 		other["user_group_ratio"] = info.PriceData.GroupRatioInfo.GroupSpecialRatio
 	}
+	info.PriceData.GroupRatioInfo.AddCarpoolLogFields(other)
 	if info.IsModelMapped {
 		other["is_model_mapped"] = true
 		other["upstream_model_name"] = info.UpstreamModelName
@@ -129,6 +130,13 @@ func taskBillingOther(task *model.Task) map[string]interface{} {
 			for k, v := range bc.OtherRatios {
 				other[k] = v
 			}
+		}
+		if bc.CarpoolPricedAt > 0 {
+			other["carpool_priced_at"] = bc.CarpoolPricedAt
+		}
+		bc.CarpoolSnapshot.AddLogFields(other)
+		if bc.CarpoolSnapshot != nil && bc.CarpoolSnapshot.HasSpecialRatio {
+			other["user_group_ratio"] = bc.CarpoolSnapshot.GroupSpecialRatio
 		}
 	}
 	props := task.Properties
@@ -249,6 +257,24 @@ func RecalculateTaskQuota(ctx context.Context, task *model.Task, actualQuota int
 // 与预扣费的差额进行补扣或退还。支持钱包和订阅计费来源。
 func RecalculateTaskQuotaByTokens(ctx context.Context, task *model.Task, totalTokens int) {
 	if totalTokens <= 0 {
+		return
+	}
+	// New carpool tasks freeze the effective group multiplier at submission.
+	// Historical tasks (including an old BillingContext without this pointer)
+	// retain the exact live-configuration calculation below.
+	if bc := task.PrivateData.BillingContext; bc != nil && bc.CarpoolSnapshot != nil {
+		if bc.PerCallBilling || bc.ModelRatio <= 0 {
+			return
+		}
+		otherMultiplier := 1.0
+		for _, r := range bc.OtherRatios {
+			if r != 1 && r > 0 {
+				otherMultiplier *= r
+			}
+		}
+		actualQuota := int(float64(totalTokens) * bc.ModelRatio * bc.CarpoolSnapshot.EffectiveGroupRatio * otherMultiplier)
+		reason := fmt.Sprintf("token重算：tokens=%d, modelRatio=%.2f, groupRatio=%.2f, carpoolRatio=%.2f, otherMultiplier=%.4f", totalTokens, bc.ModelRatio, bc.CarpoolSnapshot.BaseGroupRatio, bc.CarpoolSnapshot.Ratio, otherMultiplier)
+		RecalculateTaskQuota(ctx, task, actualQuota, reason)
 		return
 	}
 

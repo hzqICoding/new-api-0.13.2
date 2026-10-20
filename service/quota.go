@@ -107,21 +107,7 @@ func PreWssConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, usag
 	textOutTokens := usage.OutputTokenDetails.TextTokens
 	audioInputTokens := usage.InputTokenDetails.AudioTokens
 	audioOutTokens := usage.OutputTokenDetails.AudioTokens
-	groupRatio := ratio_setting.GetGroupRatio(relayInfo.UsingGroup)
-	modelRatio, _, _ := ratio_setting.GetModelRatio(modelName)
-
-	autoGroup, exists := common.GetContextKey(ctx, constant.ContextKeyAutoGroup)
-	if exists {
-		groupRatio = ratio_setting.GetGroupRatio(autoGroup.(string))
-		log.Printf("final group ratio: %f", groupRatio)
-		relayInfo.UsingGroup = autoGroup.(string)
-	}
-
-	actualGroupRatio := groupRatio
-	userGroupRatio, ok := ratio_setting.GetGroupGroupRatio(relayInfo.UserGroup, relayInfo.UsingGroup)
-	if ok {
-		actualGroupRatio = userGroupRatio
-	}
+	modelRatio, actualGroupRatio := realtimePreconsumeRatios(ctx, relayInfo)
 
 	quotaInfo := QuotaInfo{
 		InputDetails: TokenDetails{
@@ -154,6 +140,27 @@ func PreWssConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, usag
 	}
 	logger.LogInfo(ctx, "realtime streaming consume quota success, quota: "+fmt.Sprintf("%d", quota))
 	return nil
+}
+
+func realtimePreconsumeRatios(ctx *gin.Context, relayInfo *relaycommon.RelayInfo) (modelRatio, actualGroupRatio float64) {
+	modelRatio, _, _ = ratio_setting.GetModelRatio(relayInfo.OriginModelName)
+	if snapshot := relayInfo.PriceData.GroupRatioInfo.Carpool; snapshot != nil {
+		return modelRatio, snapshot.EffectiveGroupRatio
+	}
+	// Preserve the historical lookup and auto-group behavior unless this
+	// request actually selected a carpool rule at its pricing boundary.
+	groupRatio := ratio_setting.GetGroupRatio(relayInfo.UsingGroup)
+	autoGroup, exists := common.GetContextKey(ctx, constant.ContextKeyAutoGroup)
+	if exists {
+		groupRatio = ratio_setting.GetGroupRatio(autoGroup.(string))
+		log.Printf("final group ratio: %f", groupRatio)
+		relayInfo.UsingGroup = autoGroup.(string)
+	}
+	actualGroupRatio = groupRatio
+	if userGroupRatio, ok := ratio_setting.GetGroupGroupRatio(relayInfo.UserGroup, relayInfo.UsingGroup); ok {
+		actualGroupRatio = userGroupRatio
+	}
+	return modelRatio, actualGroupRatio
 }
 
 func PostWssConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, modelName string,
@@ -210,9 +217,9 @@ func PostWssConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, mod
 	var logContent string
 	if !usePrice {
 		logContent = fmt.Sprintf("模型倍率 %.2f，补全倍率 %.2f，音频倍率 %.2f，音频补全倍率 %.2f，分组倍率 %.2f",
-			modelRatio, completionRatio.InexactFloat64(), audioRatio.InexactFloat64(), audioCompletionRatio.InexactFloat64(), groupRatio)
+			modelRatio, completionRatio.InexactFloat64(), audioRatio.InexactFloat64(), audioCompletionRatio.InexactFloat64(), relayInfo.PriceData.GroupRatioInfo.LogGroupRatio())
 	} else {
-		logContent = fmt.Sprintf("模型价格 %.2f，分组倍率 %.2f", modelPrice, groupRatio)
+		logContent = fmt.Sprintf("模型价格 %.2f，分组倍率 %.2f", modelPrice, relayInfo.PriceData.GroupRatioInfo.LogGroupRatio())
 	}
 
 	// record all the consume log even if quota is 0
@@ -331,9 +338,9 @@ func PostAudioConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, u
 	var logContent string
 	if !usePrice {
 		logContent = fmt.Sprintf("模型倍率 %.2f，补全倍率 %.2f，音频倍率 %.2f，音频补全倍率 %.2f，分组倍率 %.2f",
-			modelRatio, completionRatio.InexactFloat64(), audioRatio.InexactFloat64(), audioCompletionRatio.InexactFloat64(), groupRatio)
+			modelRatio, completionRatio.InexactFloat64(), audioRatio.InexactFloat64(), audioCompletionRatio.InexactFloat64(), relayInfo.PriceData.GroupRatioInfo.LogGroupRatio())
 	} else {
-		logContent = fmt.Sprintf("模型价格 %.2f，分组倍率 %.2f", modelPrice, groupRatio)
+		logContent = fmt.Sprintf("模型价格 %.2f，分组倍率 %.2f", modelPrice, relayInfo.PriceData.GroupRatioInfo.LogGroupRatio())
 	}
 
 	// record all the consume log even if quota is 0

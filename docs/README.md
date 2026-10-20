@@ -4,6 +4,8 @@
 
 ## 当前状态
 
+**2026-10-20 方案86收尾**：已核实运行仍r15.17（程序756970f5…），拼车方案85且aggregate/*全量；下方A2描述为历史。r15.18计费实现及5280比较已完成，12条真实结算日志经拼车R2逐项相等；尚未切换。详见[拼车倍数与发布](carpool-billing-20261020/README.md)。
+
 **2026-10-19 A2灰度运行中**：r15.17程序/镜像未变，当前`CARPOOL_USAGE_AGGREGATE_ENABLED=true`；拼车只对Pro20x-260910A2（pool3）周期336/337选用新统计，其他主号旧路径。定向原生reader对照1216条全相等；实际后台刷新528/444ms，用户先反馈明显更快，随后复测冷首次仍慢；已定位拼车共享队列/5秒轮询，方案82已在拼车上线修复，用户最新复测及A2首次pending到ready响应1.464秒闭环已通过；详情见[专题末节](usage-aggregate-20261019/README.md)。当前已不是全局关闭状态。
 
 | 项目 | 已核实值 |
@@ -33,6 +35,7 @@ r15.14 于 2026-10-17 09:26（北京时间）切换，`cutover` / `verify` 通�
 | r15.14 · 10-17 | 拼车座位并发限制中间件（新增 1 文件 + 路由 2 行；策略键 `CarpoolConcurrencyPolicy`）；分支 `feat/carpool-concurrency-limit` | [并发限制](carpool-concurrency-20261016/README.md) |
 | r15.15 · 10-18 | 并发超限 429 提示按「排队等满 / 排队已满」区分，显示座位上限与等待秒数；分支 `feat/carpool-concurrency-message` | [超限提示](carpool-concurrency-message-20261018/README.md) |
 | r15.16 · 10-19 | 中继失败请求按原因写入类型 5 日志（每用户每分钟 30 条），每分钟限流 429 补提示；分支 `feat/carpool-failure-log` | [失败记录](carpool-failure-log-20261018/README.md) |
+| r15.18 · 10-20（候选） | 拼车模型倍数、任务/Realtime冻结与日志计价时点；已完成本地验证，待发布 | [实施与发布](carpool-billing-20261020/README.md) |
 | r15.17 · 10-19 | 受控聚合接口已发布但默认关闭，原接口/前端/表结构/配置保持 | [用量聚合与发布记录](usage-aggregate-20261019/README.md) |
 
 [会话登记](codex-sessions.md)用于职责接续，不替代源码、制品和发布记录。拼车项目交接入口为[会话交接与启动指南](../../carpool-platform/docs/00-会话交接与启动指南.md)。
