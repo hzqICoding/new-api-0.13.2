@@ -1,22 +1,22 @@
 # 本地定制与生产维护索引
 
-本页是此安装实例的维护入口，最后核实于 **2026-10-19 12:35 UTC**（r15.17配置灰度A2后）。各专题保留发布当时的事实，旧文中的“当前”“线上”和旧回滚命令不代表现在可以直接执行。原项目 new-api / QuantumNous 的文档与标识保持。
+本页是此安装实例的维护入口，最后核实于 **2026-10-20 10:23 UTC**（r15.17配置灰度A2后）。各专题保留发布当时的事实，旧文中的“当前”“线上”和旧回滚命令不代表现在可以直接执行。原项目 new-api / QuantumNous 的文档与标识保持。
 
 ## 当前状态
 
-**2026-10-20 方案86收尾**：已核实运行仍r15.17（程序756970f5…），拼车方案85且aggregate/*全量；下方A2描述为历史。r15.18计费实现及5280比较已完成，12条真实结算日志经拼车R2逐项相等；尚未切换。详见[拼车倍数与发布](carpool-billing-20261020/README.md)。
+**2026-10-20 方案86已上线**：new-api r15.18-billing-20261020（镜像db4eb820…、程序56892ffc…），配套拼车carpool-multiplier-20261020-1/share-20261020-02；4组空规则读回一致，Luna未迁移。矩阵5280符合、12条跨端精确一致；公开pricing、956资源及原接口保持。详见[发布记录](carpool-billing-20261020/README.md)。
 
-**2026-10-19 A2灰度运行中**：r15.17程序/镜像未变，当前`CARPOOL_USAGE_AGGREGATE_ENABLED=true`；拼车只对Pro20x-260910A2（pool3）周期336/337选用新统计，其他主号旧路径。定向原生reader对照1216条全相等；实际后台刷新528/444ms，用户先反馈明显更快，随后复测冷首次仍慢；已定位拼车共享队列/5秒轮询，方案82已在拼车上线修复，用户最新复测及A2首次pending到ready响应1.464秒闭环已通过；详情见[专题末节](usage-aggregate-20261019/README.md)。当前已不是全局关闭状态。
+**历史记录：2026-10-19 A2灰度（已被10-20状态覆盖）**：r15.17程序/镜像未变，当前`CARPOOL_USAGE_AGGREGATE_ENABLED=true`；拼车只对Pro20x-260910A2（pool3）周期336/337选用新统计，其他主号旧路径。定向原生reader对照1216条全相等；实际后台刷新528/444ms，用户先反馈明显更快，随后复测冷首次仍慢；已定位拼车共享队列/5秒轮询，方案82已在拼车上线修复，用户最新复测及A2首次pending到ready响应1.464秒闭环已通过；详情见[专题末节](usage-aggregate-20261019/README.md)。当前已不是全局关闭状态。
 
 | 项目 | 已核实值 |
 |---|---|
-| 运行版本 | `v0.13.2-carpool-r15.17-usage-aggregate-20261019` |
-| 镜像ID | `sha256:82ffa348e9abe6f352253a56eed6737afb2e480a5e83ae78b9580526ca0af28b` |
-| 程序SHA-256 | `756970f5ee85edef29eaada69bad653303e1443cb1029b5d0e4b3d2277764e3d` |
-| 当前发布目录 | `serverB:/opt/carpool/releases/newapi-usage-aggregate-20261019/` |
+| 运行版本 | `v0.13.2-carpool-r15.18-billing-20261020` |
+| 镜像ID | `sha256:db4eb820a0255018f29a228b64a1aba5c1934ef314d0b96b20edc7327fdd224b` |
+| 程序SHA-256 | `56892ffcc5467ad6e039a446a2041c6c4a60bb0ba784a53f65d92e97be19136a` |
+| 当前发布目录 | `serverB:/opt/carpool/releases/newapi-carpool-billing-20261020/` |
 | 当前classic资源目录 | `/assets/codex-routes-20261005/`（r15.17 / r15.16 / r15.15 / r15.14 内嵌前端与 r15.13 逐项一致） |
 | 配置入口 | CF默认 `https://api.1aicode.space/v1`；直连可选 `https://api.dm.1aicode.space/v1` |
-| 相邻回滚版本 | 配套拼车已更新cold-display-20261019-1；先按拼车部署记录§6回退该代码版本，再按§5回退A2运行配置，最后才考虑new-api r15.16版本回退。不得跳过容器所有权检查。 |
+| 相邻回滚版本 | new-api r15.17；先退拼车本次版本，处理非空规则/Luna迁移/未完成快照后才可用r15.18守卫脚本回滚 |
 
 r15.14 于 2026-10-17 09:26（北京时间）切换，`cutover` / `verify` 通过（版本、程序哈希、令牌日志接口、拼车健康、前端资源、Luna 价格、其他 19 个容器未变、options 未变）。上线时策略键不存在，等同不限制；限制模式由拼车后台控制。
 
@@ -35,7 +35,7 @@ r15.14 于 2026-10-17 09:26（北京时间）切换，`cutover` / `verify` 通�
 | r15.14 · 10-17 | 拼车座位并发限制中间件（新增 1 文件 + 路由 2 行；策略键 `CarpoolConcurrencyPolicy`）；分支 `feat/carpool-concurrency-limit` | [并发限制](carpool-concurrency-20261016/README.md) |
 | r15.15 · 10-18 | 并发超限 429 提示按「排队等满 / 排队已满」区分，显示座位上限与等待秒数；分支 `feat/carpool-concurrency-message` | [超限提示](carpool-concurrency-message-20261018/README.md) |
 | r15.16 · 10-19 | 中继失败请求按原因写入类型 5 日志（每用户每分钟 30 条），每分钟限流 429 补提示；分支 `feat/carpool-failure-log` | [失败记录](carpool-failure-log-20261018/README.md) |
-| r15.18 · 10-20（候选） | 拼车模型倍数、任务/Realtime冻结与日志计价时点；已完成本地验证，待发布 | [实施与发布](carpool-billing-20261020/README.md) |
+| r15.18 · 10-20 | 拼车模型倍数、任务/Realtime冻结与日志计价时点；已发布、空规则生效、Luna未迁移 | [实施与发布](carpool-billing-20261020/README.md) |
 | r15.17 · 10-19 | 受控聚合接口已发布但默认关闭，原接口/前端/表结构/配置保持 | [用量聚合与发布记录](usage-aggregate-20261019/README.md) |
 
 [会话登记](codex-sessions.md)用于职责接续，不替代源码、制品和发布记录。拼车项目交接入口为[会话交接与启动指南](../../carpool-platform/docs/00-会话交接与启动指南.md)。

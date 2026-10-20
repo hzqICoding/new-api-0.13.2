@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "verified_at": "2026-10-20T10:23:08.658805+00:00",
+  "frontend": "share-20261020-02",
+  "assets": [
+    "assets/bundle-BEww291_.js",
+    "assets/index-BLO5BCBA.js",
+    "assets/index-Dkk-BLq-.css"
+  ],
+  "newapi_version": "v0.13.2-carpool-r15.18-billing-20261020",
+  "browser_test": false,
+  "http_client_note": "Default Python UA received 403; browser UA returned 200 and matching resource hashes; no Cloudflare settings changed."
+}

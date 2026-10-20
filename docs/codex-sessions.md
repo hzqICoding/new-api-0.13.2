@@ -34,3 +34,5 @@
 ## 2026-10-20 实现与发布接续
 
 用户要求完成剩余。主代理核实旧wp86a仅needs-decision未写业务，已明确纳入异步任务和Realtime冻结路径，并只读采集38模型及映射。复用/root/fast_list_backend（沿用既有astra/xhigh，无新增UUID）负责17个Go增量与矩阵，/root/fast_list_review同配置负责发布脚本3文件；不另起子代理。两者已交付，主代理复核真实diff并跑CP实际复算12条全相等。主代理处理CP前端局部警告、R5计价时点、构建发布与台账。未把旧needs-decision记录改写为当时已实现；真实新回执为CP mailbox/from-codex/86a-completion.md。
+
+主代理最终发布：new-api业务源e6db31c6、配套拼车352315f，r15.18和carpool-multiplier/share-02已上线；后台4组空规则同步一致，Luna仍由用户决定执行。首次prepare挂载列表顺序误判由主代理修正并保留attempt，实际状态/备份/守卫见专题README及CP部署§4。未推送/合并main。

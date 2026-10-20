@@ -239,7 +239,7 @@ def running_others():
     return {item['Name']: {'id': item['Id'], 'image': item['Image'], 'started': item['State']['StartedAt'],
                            'restarts': item.get('RestartCount', 0), 'config_sha256': hashlib.sha256(canonical(item['Config'])).hexdigest(),
                            'host_sha256': hashlib.sha256(canonical(host_config(item['HostConfig']))).hexdigest(),
-                           'mounts_sha256': hashlib.sha256(canonical(item['Mounts'])).hexdigest(),
+                           'mounts_sha256': hashlib.sha256(canonical(sorted(item['Mounts'], key=canonical))).hexdigest(),
                            'networks_sha256': hashlib.sha256(canonical(item['NetworkSettings']['Networks'])).hexdigest()}
             for item in items if item['Name'].lstrip('/') not in (NAME, CANDIDATE, BACKUP)}
 

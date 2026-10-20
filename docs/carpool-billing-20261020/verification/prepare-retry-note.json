@@ -1,0 +1,8 @@
+{
+  "reason": "Docker derived mount list order is nondeterministic; comparator now sorts complete mount objects",
+  "identity_config_host_network_unchanged": true,
+  "pricing_options_schema_unchanged": true,
+  "production_cutover_not_started": true,
+  "first_attempt_preserved": "attempt-1-mount-order",
+  "note": "Bounded permutation proof was not completed for >8 mounts; no claim of full permutation enumeration."
+}

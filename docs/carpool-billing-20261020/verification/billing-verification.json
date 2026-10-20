@@ -1,0 +1,117 @@
+{
+  "passed": true,
+  "verified_at": "2026-10-20T10:16:52.061025+00:00",
+  "cp": {
+    "id": "51dd4f041da37d147e9dd642e494daf650161a9abce8b507f4d6c6cd25604158",
+    "image": "sha256:be9d3d064ec7a4e9019ab4b3c7b2a15ad16036baf043c2d716787554929f4485",
+    "started": "2026-10-20T10:08:15.751079199Z",
+    "restarts": 0,
+    "binary_sha256": "a95c5d8eab4a548eebdd2651b1e65bc538f98c3e2b280be21f04b1589d5b97d7"
+  },
+  "newapi": {
+    "id": "84f172c35ae68e2c4f7da5a421de119bc87afffb5a0c737a2c75c861b3a80d30",
+    "image": "sha256:db4eb820a0255018f29a228b64a1aba5c1934ef314d0b96b20edc7327fdd224b",
+    "started": "2026-10-20T10:05:41.186762952Z",
+    "restarts": 0,
+    "binary_sha256": "56892ffcc5467ad6e039a446a2041c6c4a60bb0ba784a53f65d92e97be19136a"
+  },
+  "frontend": "releases/share-20261020-02",
+  "cp_health": "healthy",
+  "schema_additions": [
+    [
+      "model_price_backup",
+      "billing_policy",
+      "longtext"
+    ],
+    [
+      "model_price_backup",
+      "billing_target_exprs",
+      "json"
+    ],
+    [
+      "model_price_backup",
+      "billing_target_policy",
+      "longtext"
+    ],
+    [
+      "model_price_backup",
+      "luna_migrated_at",
+      "datetime(3)"
+    ],
+    [
+      "model_price_backup",
+      "multiplier_rules",
+      "json"
+    ],
+    [
+      "model_price_backup",
+      "overrides",
+      "json"
+    ],
+    [
+      "model_price_multiplier",
+      "model",
+      "varbinary(800)"
+    ],
+    [
+      "model_price_multiplier",
+      "multiplier",
+      "decimal(4,2)"
+    ],
+    [
+      "model_price_multiplier",
+      "reason",
+      "varchar(512)"
+    ],
+    [
+      "model_price_multiplier",
+      "updated_at",
+      "datetime(3)"
+    ],
+    [
+      "model_price_multiplier",
+      "updated_by",
+      "varchar(64)"
+    ],
+    [
+      "model_price_setting",
+      "billing_issued_at",
+      "datetime(3)"
+    ],
+    [
+      "model_price_setting",
+      "billing_operation_id",
+      "bigint"
+    ],
+    [
+      "model_price_setting",
+      "billing_policy_error",
+      "varchar(512)"
+    ],
+    [
+      "model_price_setting",
+      "luna_migrated_at",
+      "datetime(3)"
+    ]
+  ],
+  "existing_columns_unchanged": true,
+  "policy_groups": [
+    "carpool-293ead47d499",
+    "carpool-3326eed1c77b",
+    "cptm-Pro20x-260910A3",
+    "cptm-Pro20x-260910A4"
+  ],
+  "multiplier_rules": 0,
+  "luna_migrated": false,
+  "billing_operation_pending": false,
+  "policy_in_sync": true,
+  "changed_options": [
+    "CarpoolBillingPolicy"
+  ],
+  "display_mode": "aggregate",
+  "display_buckets": "*",
+  "business_operations_tested": false,
+  "model_calls": false,
+  "browser_acceptance": "user pending",
+  "database_backup_sha256": "ce91857b19389924c202310bb2222363f4178dbf29281897637d9a42e3f0a2b3"
+}

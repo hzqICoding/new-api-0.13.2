@@ -91,3 +91,11 @@ python3 /opt/carpool/releases/newapi-carpool-billing-20261020/deploy.py rollback
 跨进程/api/pricing可能因Go map顺序而改变字节，逐项验证按模型/厂商标识排序、集合排序，保留重复数并拒绝重复标识。model/pricing.go将固定row pricing_version放到随机第一条，controller/pricing.go又按可用分组过滤，故公开响应可见该marker为0或1个；主代理实读两个未改的生产基线源码后修正守卫：存在时必须等于固定值，位置/被过滤导致的缺省不算价格变化。顶层pricing_version、全部价格/表达式/倍率等业务字段仍逐项严格比较，保存raw SHA与语义SHA，不声称跨进程原字节一致。
 
 回滚不仅检查策略/本地迁移与规则，还检查未完成任务的carpool_snapshot；即使当前已恢复空规则，仍需等新计费任务结算才能退旧软件。这里只发布软件，不自动执行需求方页面的Luna迁移。
+
+## 2026-10-20 实际发布完成
+
+18:05软件切换成功，程序56892ffcc5467ad6e039a446a2041c6c4a60bb0ba784a53f65d92e97be19136a、镜像db4eb820a0255018f29a228b64a1aba5c1934ef314d0b96b20edc7327fdd224b；源e6db31c6，主代理完整基线/语义pricing/原接口/956资产/114依赖/其他服务检查通过。脚本实际prepare曾因Docker派生Mounts数组顺序不稳定误判，未切换；原attempt保留，确认identity/config/host/network/pricing/options/schema不变后规范化挂载排序、重新prepare通过。没有重置其他服务或关闭守卫。
+
+随后拼车后端352315f和share-02上线，新增管理schema；18:13自动下发4组空规则，18:16读回一致，Luna未迁移、现价不变；18:23公网版本/资源通过。new-api现有表结构未变。源码/程序/配置私有备份均在/opt/carpool/releases/newapi-carpool-billing-20261020，旧容器停止保留。完整联动发布与回滚记录在CP docs/4-发布记录/部署记录-20261020.md §4。
+
+新API脚本verify的options基线是软件切换阶段；配套CP之后新增CarpoolBillingPolicy属于预期变化，不要拿旧基线作长期全站状态检查。退旧软件须先退配套CP并满足策略、迁移和未完成任务计费守卫。没有恢复数据库、发模型测试请求或替用户执行Luna迁移。
