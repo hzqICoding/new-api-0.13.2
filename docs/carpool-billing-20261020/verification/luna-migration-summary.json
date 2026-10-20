@@ -1,0 +1,24 @@
+{
+  "configuration_passed": true,
+  "billing_review_passed": true,
+  "checked_at": "2026-10-20T11:42:45.803129+00:00",
+  "migrated_at": "2026-10-20T11:34:18.868000Z",
+  "backup_id": 1,
+  "luna_rule_count": 8,
+  "multiplier": 2,
+  "recorded_span_ms": 112.288,
+  "conservative_window_ms": 113.288,
+  "window_second_candidates": 0,
+  "actual_logs_reviewed": 1,
+  "actual_cost_matches_previous": true,
+  "delta_micro": 0,
+  "watermark": 599627,
+  "other_models_unchanged": true,
+  "pending": false,
+  "business_writes": false,
+  "model_calls": false,
+  "sample_log_ids": [
+    599584
+  ],
+  "old_program_downgrade_guard_verified": true
+}
