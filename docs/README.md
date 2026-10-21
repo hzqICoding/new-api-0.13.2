@@ -1,8 +1,10 @@
 # 本地定制与生产维护索引
 
-本页是此安装实例的维护入口，最后核实于 **2026-10-20 11:42 UTC**（r15.17配置灰度A2后）。各专题保留发布当时的事实，旧文中的“当前”“线上”和旧回滚命令不代表现在可以直接执行。原项目 new-api / QuantumNous 的文档与标识保持。
+本页是此安装实例的维护入口，最后核实于 **2026-10-21 13:03 UTC**（r15.17配置灰度A2后）。各专题保留发布当时的事实，旧文中的“当前”“线上”和旧回滚命令不代表现在可以直接执行。原项目 new-api / QuantumNous 的文档与标识保持。
 
 ## 当前状态
+
+**2026-10-21资源防护已发布**：当前new-api为r15.19-resource-20261021（镜像608c4056…、程序7411f485…），仅增加本机Codex请求ID/用户/渠道/字节数元数据；Luna迁移、r15.18计费、956项前端及schema保持。6组自然请求同ID/同大小通过，完整记录见[资源日志专题](resource-observability-20261021/README.md)。
 
 **2026-10-20 方案86已上线**：new-api r15.18-billing-20261020（镜像db4eb820…、程序56892ffc…），配套拼车carpool-multiplier-20261020-1/share-20261020-02；用户19:34已完成Luna迁移，4组/8模型×2；标价减半，拼车实际价保持。19:42实际1条消费复算与迁移前同价均一致，备份#1。矩阵5280符合、12条跨端精确一致；公开pricing、956资源及原接口保持。详见[发布记录](carpool-billing-20261020/README.md)。
 
@@ -10,13 +12,13 @@
 
 | 项目 | 已核实值 |
 |---|---|
-| 运行版本 | `v0.13.2-carpool-r15.18-billing-20261020` |
-| 镜像ID | `sha256:db4eb820a0255018f29a228b64a1aba5c1934ef314d0b96b20edc7327fdd224b` |
-| 程序SHA-256 | `56892ffcc5467ad6e039a446a2041c6c4a60bb0ba784a53f65d92e97be19136a` |
-| 当前发布目录 | `serverB:/opt/carpool/releases/newapi-carpool-billing-20261020/` |
+| 运行版本 | `v0.13.2-carpool-r15.19-resource-20261021` |
+| 镜像ID | `sha256:608c40569380ef11b7d8038df04b36c3382e89553d2a21b0d70e059c2d4ad956` |
+| 程序SHA-256 | `7411f485c5f152d311ab2dbc999a2c415b4acfe6dd5f477fcfb11bee8aba0870` |
+| 当前发布目录 | `serverB:/opt/carpool/releases/resource-guard-20261021/new-api/` |
 | 当前classic资源目录 | `/assets/codex-routes-20261005/`（r15.17 / r15.16 / r15.15 / r15.14 内嵌前端与 r15.13 逐项一致） |
 | 配置入口 | CF默认 `https://api.1aicode.space/v1`；直连可选 `https://api.dm.1aicode.space/v1` |
-| 相邻回滚版本 | new-api r15.17；先退拼车本次版本，处理非空规则/Luna迁移/未完成快照后才可用r15.18守卫脚本回滚 |
+| 相邻回滚版本 | r15.18，使用resource-guard-20261021/rollout.py仅退本次日志补丁；不可误用旧脚本退r15.17 |
 
 r15.14 于 2026-10-17 09:26（北京时间）切换，`cutover` / `verify` 通过（版本、程序哈希、令牌日志接口、拼车健康、前端资源、Luna 价格、其他 19 个容器未变、options 未变）。上线时策略键不存在，等同不限制；限制模式由拼车后台控制。
 
@@ -24,6 +26,7 @@ r15.14 于 2026-10-17 09:26（北京时间）切换，`cutover` / `verify` 通�
 
 | 首次发布 | 改动 | 维护记录 |
 |---|---|---|
+| r15.19 · 10-21 | 本机Codex请求ID/用户/渠道/请求大小元数据；默认关闭、生产启用 | [资源关联日志](resource-observability-20261021/README.md) |
 | r15.6 · 09-22 | 命中敏感词返回400、保留错误码、中文处理建议及SkipRetry | [敏感词提示](sensitive-word-response-20260922.md) |
 | r15.7 · 09-23 | Luna原定Standard×1.3表达式、模型组倍率覆盖1、前端报价同步 | [Luna定价与维护](luna-pricing-20260923/README.md)、[前端补丁历史](luna-pricing-20260923/frontend-production-patch.md) |
 | r15.8 · 09-25 | Luna主包改名后分包引用旧入口404；转发兼容入口及独立资源目录 | [模块加载修复](frontend-module-fix-20260925/README.md)、[审计](frontend-module-fix-20260925/audit-report.md) |
