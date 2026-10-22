@@ -1,5 +1,9 @@
 # Codex 协作登记
 
+## 2026-10-22 安全重编译发布与相邻服务核查
+
+主代理负责lan205产物验证、ServerB New API r15.20部署与回滚守卫；`/root/proxy_security_updates`（gpt-6.1-sol/high）只读研究CPA/codex2api安全版本，无服务变更。已完成可复用，回执docs/security-go12610-20261022/proxy-security-review.md；子线程独立UUID未获工具权威返回，环境观察ID不冒称可跨客户端恢复。当前线程可followup接续。New API已上线、其他服务仅核查未升级。
+
 | 日期 | Canonical task | 模型/等级 | 职责 | 状态 | 说明 |
 |---|---|---|---|---|---|
 | 2026-10-05 | /root | 当前主会话 | 参照拼车端优化向导，scoped CSS构建、UI制品审核与r15.12发布 | 已发布，公网资源验证通过，视觉待用户验收 | 镜像60de5cd3…b71a；589项后端源码保持，713项旧非首页资源保持 |

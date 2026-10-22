@@ -4,15 +4,18 @@
 
 | 日期 | 版本 | 变更说明 |
 |---|---|---|
+| 2026-10-22 | maintenance-handoff | 标明 r15.19 已被 r15.20 安全重编译替代，请求关联日志能力继续保留；旧镜像/回滚命令仅为当轮历史记录，现行基线由主索引与安全发布专题维护。 |
 | 2026-10-21 | r15.19-resource-20261021 | 21:01已发布，只新增本机Codex HTTP转发元数据与关联头；计费、前端和schema保持。六组自然请求同ID/同大小验证通过。 |
 
 实现提交`cc8369c39717d5b76506404d23f74a21df68e038`，基于已完成Luna迁移的r15.18。新增`relay/channel/codex_request_trace.go`及测试，在`doRequest`实际发送前调用；`go test ./relay/channel -count=1`通过。
 
 启用环境变量`CODEX_RELAY_TRACE_ENABLED=true`；未设置默认关闭。仅`http://codex2api:8080`已知模型POST路径启用，服务器生成的请求ID覆盖客户端或渠道header override中的同名值，使用`X-Newapi-Request-ID`与codex2api关联。日志包含request_id、user_id、channel_id、attempt、path、body_bytes及known标记、stream/channel_test；未知长度为-1，不额外读取或复制请求体。没有正文、API Key、URL query或邮箱。此ID仅用于元数据关联，不作授权/计费身份。
 
-当前：`v0.13.2-carpool-r15.19-resource-20261021`；镜像`sha256:608c40569380ef11b7d8038df04b36c3382e89553d2a21b0d70e059c2d4ad956`；程序`7411f485c5f152d311ab2dbc999a2c415b4acfe6dd5f477fcfb11bee8aba0870`。原606项Go/module源码只1项修改/2项新增，956项内嵌前端逐文件一致；pricing语义、稳定options/schema通过发布守卫，Luna/拼车倍数及其他服务保持。
+**当前状态更新：** 2026-10-22 已发布 r15.20 / Go1.26.10，本专题代码及 `CODEX_RELAY_TRACE_ENABLED=true` 保持。运行镜像、程序 SHA 与当前回滚边界见[维护索引](../README.md)和[安全发布记录](../security-go12610-20261022/README.md)。下方仅记录 r15.19 首次发布时状态。
 
-服务器资产与实际旧r15.18容器：`/opt/carpool/releases/resource-guard-20261021/new-api/`，回滚仅执行：
+历史 r15.19：`v0.13.2-carpool-r15.19-resource-20261021`；镜像`sha256:608c40569380ef11b7d8038df04b36c3382e89553d2a21b0d70e059c2d4ad956`；程序`7411f485c5f152d311ab2dbc999a2c415b4acfe6dd5f477fcfb11bee8aba0870`。原606项Go/module源码只1项修改/2项新增，956项内嵌前端逐文件一致；pricing语义、稳定options/schema通过发布守卫，Luna/拼车倍数及其他服务保持。
+
+历史服务器资产与当时旧r15.18容器：`/opt/carpool/releases/resource-guard-20261021/new-api/`。下面命令只用于 r15.19 当轮回滚，不能用于当前 r15.20：
 
 ```bash
 python3 /opt/carpool/releases/resource-guard-20261021/rollout.py rollback new-api

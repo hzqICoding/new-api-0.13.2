@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "binary_sha256": "97e241c4ce36ea36d1c361296beff02e0606e3bbc394971bb231297b1c028e02",
+  "compressed_sha256": "723a7798f6bf958130700b5240263627800a25f23c8047be654489e3f4173acd",
+  "embedded_assets": 956,
+  "production_assets_equal": true,
+  "module_buildinfo_equal": true,
+  "go_build_version": "go1.26.10",
+  "deployment_performed": false
+}

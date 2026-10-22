@@ -1,0 +1,48 @@
+{
+  "host": "lan205",
+  "version": "v0.13.2-carpool-r15.20-go12610-20261022",
+  "go_version": "go version go1.26.10 linux/amd64",
+  "source_sha256": "3b5072f987d7b1830a2dac970ffc5b6662e1eba943c72409ef6ee2b7958d626a",
+  "source_commit": "cc8369c39717d5b76506404d23f74a21df68e038",
+  "source_count": 608,
+  "frontend_count": 956,
+  "parallel_packages": 6,
+  "GOMAXPROCS": 6,
+  "steps": [
+    {
+      "name": "dependencies",
+      "seconds": 28.49,
+      "exit_code": 0,
+      "sampled_tree_rss_peak_mib": 25.1,
+      "minimum_host_available_mib": 30787.6
+    },
+    {
+      "name": "build",
+      "seconds": 22.93,
+      "exit_code": 0,
+      "sampled_tree_rss_peak_mib": 1402.0,
+      "minimum_host_available_mib": 28937.6
+    },
+    {
+      "name": "x509",
+      "seconds": 40.67,
+      "exit_code": 0,
+      "sampled_tree_rss_peak_mib": 220.7,
+      "minimum_host_available_mib": 29841.8
+    },
+    {
+      "name": "regressions",
+      "seconds": 20.55,
+      "exit_code": 0,
+      "sampled_tree_rss_peak_mib": 1309.6,
+      "minimum_host_available_mib": 29080.6
+    }
+  ],
+  "started_at": "2026-10-22T12:00:14.835939+08:00",
+  "binary_sha256": "97e241c4ce36ea36d1c361296beff02e0606e3bbc394971bb231297b1c028e02",
+  "binary_bytes": 135217314,
+  "source_unchanged": true,
+  "frontend_unchanged": true,
+  "finished_at": "2026-10-22T12:02:08.108443+08:00",
+  "passed": true
+}
