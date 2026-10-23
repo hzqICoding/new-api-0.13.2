@@ -484,6 +484,9 @@ func DoRequest(c *gin.Context, req *http.Request, info *common.RelayInfo) (*http
 	return doRequest(c, req, info)
 }
 func doRequest(c *gin.Context, req *http.Request, info *common.RelayInfo) (*http.Response, error) {
+	info.CodexUltra = nil
+	// This response metadata is never accepted from client header passthrough.
+	req.Header.Del(codexUltraHeader)
 	var client *http.Client
 	var err error
 	if info.ChannelSetting.Proxy != "" {
@@ -524,6 +527,7 @@ func doRequest(c *gin.Context, req *http.Request, info *common.RelayInfo) (*http
 	if resp == nil {
 		return nil, errors.New("resp is nil")
 	}
+	captureCodexUltraMetadata(req, resp, info)
 
 	_ = req.Body.Close()
 	_ = c.Request.Body.Close()

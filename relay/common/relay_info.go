@@ -114,6 +114,7 @@ type RelayInfo struct {
 	IsFirstRequest         bool
 	AudioUsage             bool
 	ReasoningEffort        string
+	CodexUltra             *bool // Trusted local Codex HTTP response metadata; nil means unknown.
 	UserSetting            dto.UserSetting
 	UserEmail              string
 	UserQuota              int
