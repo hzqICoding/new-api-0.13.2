@@ -19,3 +19,7 @@
 每次修改完成：提交→测试/审核→按用户授权发布→更新版本/备份/回退/验收边界→fetch自有origin→归并main→push main与本次显式发布标签→ls-remote核对。远程分叉先读真实diff并补回归，绝不用force绕过。
 
 跨仓关系与最终同步记录：[拼车93维护手册](<E:/OtherPro/carpool-platform/docs/1-项目文档/93-三仓库版本归档与升级维护.md>)。此维护轮不重新部署服务，真实Ultra=true自然样本/浏览器验收仍保留待观察。
+
+## 本轮归档结果
+
+已将已发布分支fast-forward归并自有main并推origin/main；注释标签deploy/r15.21-ultra-20261023已推送，解引用为运行源码27f222a7992af0c3b447fb4da0300c694dd6c789。运行Go/module代码与该提交完全一致，工作区干净、无冲突/强推。后续main的文档提交不代表线上重新发布；最终远程同步以交付时ls-remote核对为准。
